@@ -211,7 +211,7 @@ UNFOLD = {
                     {"title": "Sổ Giao Dịch", "link": "/admin/quanlyquy/giaodich/", "icon": "receipt_long"},
                     {"title": "Quản Lý Quỹ", "link": "/admin/quanlyquy/loaiquy/", "icon": "account_balance"},
                     {"title": "Đợt Thu Tiền", "link": "/admin/quanlyquy/dotthu/", "icon": "calendar_month"},
-                    {"title": "Danh Mục Thu/Chi", "link": "/admin/quanlyquy/danhmucthuchi/", "icon": "category"},
+                    {"title": "Danh Mục Thu/Chi", "link": "/admin/quanlyquy/danhmuc/", "icon": "category"},
                 ],
             },
             {

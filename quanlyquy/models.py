@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import User
 
 # ==========================================
 # LÕI HỆ THỐNG: QUẢN LÝ DẤU VẾT & XÓA MỀM
@@ -91,7 +93,18 @@ class ThanhVien(BaseModel):
 class LoaiQuy(BaseModel):
     ten_quy = models.CharField(max_length=100, verbose_name="Tên quỹ")
     is_khoa_so = models.BooleanField(default=False, verbose_name="Khóa sổ kế toán")
-
+    
+    # 🌟 BẮT BUỘC PHẢI CÓ DÒNG NÀY TRONG MODELS.PY:
+    lop_hoc = models.ForeignKey('LopHoc', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Thuộc lớp học")
+    
+    nam_hoc_bat_dau = models.IntegerField(default=2022, verbose_name="Năm học bắt đầu")
+    nam_hoc_ket_thuc = models.IntegerField(default=2026, verbose_name="Năm học kết thúc")
+    trang_thai_vong_doi = models.CharField(
+        max_length=20, 
+        choices=[('ACTIVE', 'Đang hoạt động'), ('DISBANDED', 'Đã giải tán')], 
+        default='ACTIVE', 
+        verbose_name="Trạng thái vòng đời"
+    )
     class Meta:
         verbose_name = "Quỹ Lớp"
         verbose_name_plural = "Quản Lý Quỹ Lớp"
@@ -328,6 +341,9 @@ class BieuQuyet(BaseModel):
     cau_hoi = models.CharField(max_length=255, verbose_name="Câu hỏi biểu quyết")
     han_chot = models.DateTimeField(verbose_name="Hạn chót vote")
     dang_mo = models.BooleanField(default=True, verbose_name="Đang diễn ra")
+    so_tien_dau_tu = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Số tiền đề xuất đầu tư")
+    loai_quy = models.ForeignKey('LoaiQuy', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Quỹ sử dụng đầu tư")
+    trang_thai_duyet = models.CharField(max_length=20, choices=[('PENDING', 'Chờ gom phiếu'), ('APPROVED', 'Đã thông qua'), ('REJECTED', 'Bị từ chối')], default='PENDING', verbose_name="Trạng thái phê duyệt")
     class Meta: verbose_name = "Khảo Sát"; verbose_name_plural = "Bầu Cử / Khảo Sát"
 
 class PhuongAnBieuQuyet(BaseModel):
@@ -443,3 +459,58 @@ def tu_dong_cap_nhat_tien_do(sender, instance, created, **kwargs):
         tiendo.so_tien_da_nop = tong_da_nop
         tiendo.trang_thai = 'DU' if tong_da_nop >= tiendo.so_tien_can_nop else 'THIEU'
         tiendo.save()
+# 1. Quỹ lớp & Trạng thái vòng đời (Giai đoạn 1 -> Giai đoạn 4)
+class ClassFund(models.Model):
+    name = models.CharField(max_length=100)
+    total_cash = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)   # Tiền mặt khả dụng
+    total_invest = models.DecimalField(max_digits=15, decimal_places=2, default=0.00) # Tiền gửi đầu tư sinh lãi
+    status = models.CharField(max_length=20, default='ACTIVE')                        # ACTIVE, FREEZING, CLOSED
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return self.name
+
+# 2. Đợt thu quỹ (Giai đoạn 1)
+class CollectionPeriod(models.Model):
+    fund = models.ForeignKey(ClassFund, on_delete=models.CASCADE)
+    title = models.CharField(max_length=150)
+    amount_required = models.DecimalField(max_digits=15, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.title} - {self.fund.name}"
+
+# 3. Sổ giao dịch và đối soát (Giai đoạn 1 & 4)
+class Transaction(models.Model):
+    fund = models.ForeignKey(ClassFund, on_delete=models.CASCADE)
+    collection_period = models.ForeignKey(CollectionPeriod, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    order_id = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name="Mã định danh đối soát")
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    type = models.CharField(max_length=10) # THU, CHI, LAI, HOAN_TIEN
+    status = models.CharField(max_length=20, default='PENDING') # PENDING, SUCCESS, FAILED
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.order_id} - {self.type} - {self.amount}"
+
+# 4. Đề xuất đầu tư (Giai đoạn 2)
+class InvestmentProposal(models.Model):
+    fund = models.ForeignKey(ClassFund, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    status = models.CharField(max_length=20, default='PENDING') # PENDING, APPROVED, REJECTED
+    expired_at = models.DateTimeField() # Hạn chót 3 ngày để Cron Job quét ngầm
+
+    def __str__(self):
+        return self.title
+
+# 5. Chi tiết phiếu bầu của thành viên (Giai đoạn 2)
+class ProposalVote(models.Model):
+    proposal = models.ForeignKey(InvestmentProposal, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    choice = models.CharField(max_length=10) # VOTE_YES, VOTE_NO, AUTO_YES
+    voted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.proposal.title} - {self.choice}"

@@ -3,10 +3,12 @@ from django.http import HttpResponse
 from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.urls import reverse, path
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.db.models import Sum
 import pandas as pd
 from unfold.decorators import action, display
+from .models import ClassFund, CollectionPeriod, Transaction, InvestmentProposal, ProposalVote
 
 from import_export.admin import ImportExportModelAdmin
 from unfold.admin import ModelAdmin, TabularInline # Thêm TabularInline của Unfold cho đẹp
@@ -200,3 +202,37 @@ class HuyHieuAdmin(ModelAdmin):
 @admin.register(HuyHieuThanhVien)
 class HuyHieuThanhVienAdmin(ModelAdmin): 
     list_display = ('thanh_vien', 'huy_hieu', 'ngay_dat_duoc')
+
+# ==========================================
+# 5. QUẢN LÝ ĐỀ XUẤT ĐẦU TƯ & BIỂU QUYẾT
+# ==========================================
+@admin.register(ClassFund)
+class ClassFundAdmin(admin.ModelAdmin):
+    list_display = ('name', 'total_cash', 'total_invest', 'status', 'start_date', 'end_date')
+    list_filter = ('status',)
+    search_fields = ('name',)
+
+# 2. Đăng ký Đợt Thu Quỹ
+@admin.register(CollectionPeriod)
+class CollectionPeriodAdmin(admin.ModelAdmin):
+    list_display = ('title', 'fund', 'amount_required')
+    list_filter = ('fund',)
+
+# 3. Đăng ký Sổ Giao Dịch & Đối Soát Tự Động
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('order_id', 'fund', 'user', 'amount', 'type', 'status', 'created_at')
+    list_filter = ('type', 'status', 'fund')
+    search_fields = ('order_id', 'user__username')
+
+# 4. Đăng ký Đề xuất Đầu tư
+@admin.register(InvestmentProposal)
+class InvestmentProposalAdmin(admin.ModelAdmin):
+    list_display = ('title', 'fund', 'amount', 'status', 'expired_at')
+    list_filter = ('status', 'fund')
+
+# 5. Đăng ký Chi tiết Phiếu bầu
+@admin.register(ProposalVote)
+class ProposalVoteAdmin(admin.ModelAdmin):
+    list_display = ('proposal', 'user', 'choice', 'voted_at')
+    list_filter = ('choice', 'proposal__fund')

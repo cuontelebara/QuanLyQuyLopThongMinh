@@ -895,3 +895,42 @@ def tui_do_view(request):
         'user_role_name': "Thủ quỹ" if is_thu_quy(request.user) else "Thành viên"
     }
     return render(request, 'quanlyquy/tui_do.html', context)
+# ==========================================
+# 7. API WEBHOOK NGÂN HÀNG (ĐỐI SOÁT TỰ ĐỘNG THEO ORDER_ID)
+# ==========================================
+@csrf_exempt  # Chặn lỗi bảo mật CSRF từ ứng dụng bên thứ 3 gọi vào
+def banking_webhook(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Đọc cấu trúc gói tin nhận từ webhook ngân hàng (Casso hoặc PayOS)
+            data_item = data.get('data', [{}])[0] if 'data' in data else data
+            
+            description = data_item.get('description', '')  # Nội dung chuyển khoản: "FUNDSMART12345"
+            amount_paid = float(data_item.get('amount', 0)) # Số tiền thực tế nhận được
+            
+            if "FUNDSMART" in description:
+                # Trích xuất mã giao dịch (Order ID) từ nội dung chuyển khoản
+                order_id = description.split("FUNDSMART")[-1].strip()
+                
+                # Bọc trong transaction.atomic để bảo vệ an toàn dữ liệu, tránh ghi đè đồng thời
+                with transaction.atomic():
+                    # Tìm đúng giao dịch đang treo (da_xac_nhan=False) trong Sổ Giao Dịch của sếp
+                    txn = GiaoDich.objects.select_for_update().get(order_id=order_id, da_xac_nhan=False)
+                    
+                    # Đối soát số tiền thực tế nhận được với hóa đơn hệ thống
+                    if float(txn.so_tien) == amount_paid:
+                        txn.da_xac_nhan = True
+                        txn.phuong_thuc = 'BANK'  # Đổi sang thanh toán ngân hàng
+                        txn.save()  # Khi save(), hàm tự động cập nhật tiến độ (Signal) của sếp sẽ tự chạy!
+                        
+                        return JsonResponse({'status': 'success', 'message': 'Đối soát tự động thành công, tiến độ đã cập nhật!'}, status=200)
+                    else:
+                        return JsonResponse({'status': 'error', 'message': 'Sai số tiền giao dịch!'}, status=400)
+                        
+        except GiaoDich.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Không tìm thấy giao dịch hợp lệ hoặc giao dịch đã được xác nhận trước đó!'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
