@@ -1,0 +1,59 @@
+{% extends "unfold/layouts/base_simple.html" %}
+{% block content %}
+<style>
+    .upload-card { background: var(--bg-surface, #ffffff); border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin: 40px auto; font-family: 'Inter', sans-serif; }
+    .dark .upload-card { background: #1e293b; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+    .btn-download { display: inline-flex; align-items: center; background: #f59e0b; color: white; font-weight: 800; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-size: 13px; transition: 0.2s; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);}
+    .btn-download:hover { background: #d97706; transform: translateY(-2px); }
+    .btn-submit { background: #4f46e5; color: white; font-weight: 900; padding: 18px; border-radius: 16px; border: none; width: 100%; cursor: pointer; font-size: 16px; margin-top: 24px; transition: 0.2s; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);}
+    .btn-submit:hover { background: #4338ca; transform: translateY(-2px); }
+    .drop-zone { border: 2px dashed #cbd5e1; border-radius: 20px; padding: 50px; text-align: center; cursor: pointer; transition: 0.3s; background: #f8fafc; }
+    .dark .drop-zone { border-color: #475569; background: #0f172a; }
+    .drop-zone:hover { background: rgba(99, 102, 241, 0.05); border-color: #6366f1; }
+</style>
+
+<div class="upload-card">
+    <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 10px; color: #4f46e5; text-align: center;">🚀 Tải lên sao kê</h1>
+    <p style="text-align: center; color: #64748b; margin-bottom: 30px; font-size: 14px;">Hệ thống sẽ tự động dò tìm sai lệch tài chính</p>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 30px;">
+        <div>
+            <div style="color: #b45309; font-weight: 800; font-size: 15px;">Chưa có file chuẩn?</div>
+            <div style="color: #d97706; font-size: 12px; margin-top: 4px;">Tải mẫu để nhập đúng cột "Số tiền"</div>
+        </div>
+        <a href="{{ download_url }}" class="btn-download">📥 TẢI FILE MẪU</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reconcile_with_bank" />
+        {% for obj in items %}<input type="hidden" name="_selected_action" value="{{ obj.pk }}" />{% endfor %}
+
+        <label class="drop-zone" style="display: block;">
+            <div id="u-content">
+                <div style="font-size: 48px; margin-bottom: 15px;">📁</div>
+                <div style="color: #64748b; font-weight: bold; font-size: 15px;">Click để chọn file .xlsx</div>
+            </div>
+            <div id="u-success" style="display: none; color: #10b981; font-weight: 800; font-size: 16px;">
+                <div style="font-size: 40px; margin-bottom: 10px;">✅</div>
+                Đã nhận file: <br><span id="f-name" style="color:#059669;"></span>
+            </div>
+            <input name="excel_file" type="file" style="display: none;" required onchange="showFile(this)" />
+        </label>
+        
+        <button type="submit" name="apply" class="btn-submit">BẮT ĐẦU ĐỐI SOÁT</button>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="../" style="color: #64748b; font-weight: bold; text-decoration: none; font-size: 14px;">← Quay lại</a>
+        </div>
+    </form>
+</div>
+<script>
+    function showFile(input) {
+        if(input.files[0]) {
+            document.getElementById('u-content').style.display = 'none';
+            document.getElementById('u-success').style.display = 'block';
+            document.getElementById('f-name').innerText = input.files[0].name;
+        }
+    }
+</script>
+{% endblock %}

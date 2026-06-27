@@ -1,0 +1,38 @@
+{% if messages %}
+    {% for message in messages %}
+        {% if "QUEST_SUCCESS" in message.message %}
+            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    showToast("{{ message|escapejs }}", "{{ message.tags }}");
+                    let data = "{{ message.message|escapejs }}".split('|');
+                    let questName = data[1];
+                    let xuThuong = data[2];
+
+                    let overlay = document.createElement('div');
+                    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px); opacity:0; transition:0.5s;";
+                    
+                    overlay.innerHTML = `
+                        <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border: 2px solid #38bdf8; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 0 50px rgba(56, 189, 248, 0.4); transform: scale(0.5); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);" id="quest-popup-box">
+                            <i class="fa-solid fa-medal" style="font-size: 60px; color: #38bdf8; margin-bottom: 20px; filter: drop-shadow(0 0 10px #38bdf8);"></i>
+                            <h2 style="color: white; font-weight: 900; font-size: 28px; margin: 0 0 10px 0; text-transform: uppercase;">QUEST CLEARED!</h2>
+                            <p style="color: #94a3b8; font-size: 16px; margin-bottom: 20px;">Nhiệm vụ: <b style="color: white;">${questName}</b></p>
+                            <div style="background: rgba(251, 191, 36, 0.1); padding: 15px; border-radius: 16px; border: 1px dashed #fbbf24; display: inline-block;">
+                                <span style="font-size: 12px; color: #fbbf24; font-weight: bold; text-transform: uppercase; display: block;">Phần thưởng</span>
+                                <span style="font-size: 30px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.5);">+${xuThuong} XU</span>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.remove()" style="display: block; width: 100%; margin-top: 30px; padding: 15px; border-radius: 12px; background: #38bdf8; color: #0f172a; font-weight: 900; border: none; cursor: pointer; font-size: 16px; text-transform: uppercase;">Tuyệt Vời</button>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+
+                    setTimeout(() => { 
+                        overlay.style.opacity = '1'; 
+                        document.getElementById('quest-popup-box').style.transform = 'scale(1)';
+                        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, zIndex: 1000000 });
+                    }, 100);
+                });
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}

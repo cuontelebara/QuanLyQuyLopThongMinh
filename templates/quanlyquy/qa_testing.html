@@ -1,0 +1,190 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'quanlyquy/logo.ico' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Chaos Lab | FundSmart Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/dashboard.css' %}">
+    
+    <style>
+        body { background-color: #050505; color: #fff; }
+        .chaos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px; }
+        .chaos-card { background: #111; border: 1px solid #333; border-radius: 16px; padding: 25px; position: relative; overflow: hidden; }
+        .chaos-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #333; }
+        
+        /* CÁC MÀU SẮC CHO THẺ CHAOS */
+        .chaos-card.danger::before { background: #ef4444; box-shadow: 0 0 15px #ef4444; }
+        .chaos-card.warning::before { background: #f59e0b; box-shadow: 0 0 15px #f59e0b; }
+        .chaos-card.info::before { background: #3b82f6; box-shadow: 0 0 15px #3b82f6; }
+        .chaos-card.success::before { background: #10b981; box-shadow: 0 0 15px #10b981; } /* BỔ SUNG MÀU XANH LỤC */
+        
+        .terminal-window { background: #000; border: 1px solid #333; border-radius: 12px; padding: 15px; font-family: 'Fira Code', monospace; font-size: 12px; color: #10b981; height: 350px; overflow-y: auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .terminal-line { margin-bottom: 5px; opacity: 0.9; line-height: 1.5; }
+        .terminal-line.error { color: #ef4444; }
+        .terminal-line.warn { color: #f59e0b; }
+        .terminal-line.info { color: #3b82f6; }
+        .terminal-line.success { color: #10b981; }
+        
+        .btn-chaos { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 900; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; font-family: inherit; }
+        
+        .btn-chaos.red { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+        .btn-chaos.red:hover { background: #ef4444; color: #fff; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        
+        .btn-chaos.yellow { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; }
+        .btn-chaos.yellow:hover { background: #f59e0b; color: #000; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+
+        .btn-chaos.blue { background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; color: #3b82f6; }
+        .btn-chaos.blue:hover { background: #3b82f6; color: #fff; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+
+        /* NÚT XANH LỤC CHO KHỞI TẠO DATA */
+        .btn-chaos.green { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; }
+        .btn-chaos.green:hover { background: #10b981; color: #000; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+    </style>
+</head>
+
+<body>
+    <div class="app-container" style="background: rgba(10, 10, 10, 0.9) !important; border: 1px solid #222;">
+        
+        <div class="sidebar" style="background: #000 !important; border-right: 1px solid #222;">
+            <div class="logo-wrapper hover-lift" onclick="window.location.href='/'" style="margin-bottom: 30px; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 0 10px;">
+                <div class="logo-box" style="width: 42px; height: 42px; background: #ef4444; border-radius: 14px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);">
+                    <i class="fa-solid fa-bug text-white" style="font-size: 20px;"></i>
+                </div>
+                <div class="brand-info">
+                    <div class="brand-top" style="display: flex; align-items: center;">
+                        <span class="brand-name" style="font-size: 22px; font-weight: 900; color: #fff;">QA LAB</span>
+                    </div>
+                    <span class="brand-slogan" style="font-size: 11px; color: #ef4444; font-weight: 600;">System Destructor</span>
+                </div>
+            </div>
+
+            <a href="/" style="display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 16px; color: var(--text-light); text-decoration: none; font-weight: 700; transition: 0.3s;"><i class="fa-solid fa-arrow-left"></i> <span>Trở về Web</span></a>
+        </div>
+
+        <div class="main-content" style="flex: 1; padding: 35px; overflow-y: auto; background: transparent;">
+            
+            <div style="border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 32px; color: #fff; font-weight: 900; display: flex; align-items: center; gap: 15px;">
+                    <i class="fa-solid fa-flask-vial" style="color: #f59e0b;"></i> Chaos Engineering Dashboard
+                </h1>
+                <p style="color: #888; font-size: 14px; margin-top: 5px;">Công cụ dành riêng cho Tester để test hệ thống và bơm dữ liệu nhanh.</p>
+            </div>
+
+            <div class="chaos-grid">
+                
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <div class="chaos-card danger">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px;"><i class="fa-solid fa-building-columns text-danger me-2"></i> Giả lập rớt mạng Ngân hàng</h3>
+                        <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Ngắt kết nối API Bank ngay lúc giao dịch đang diễn ra để test hệ thống Rollback tiền.</p>
+                        <button class="btn-chaos red" onclick="runChaos('TIMEOUT_504', 'Kích hoạt kịch bản ngắt kết nối Bank API...', 'error')">
+                            <i class="fa-solid fa-plug-circle-xmark"></i> KÍCH HOẠT LỖI TIMEOUT (504)
+                        </button>
+                    </div>
+
+                    <div class="chaos-card warning">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px;"><i class="fa-solid fa-database text-warning me-2" style="color: #f59e0b;"></i> Auto-Seed Data (Stress Test)</h3>
+                        <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Bơm tự động 50 dòng dữ liệu giao dịch ảo vào Database để test tốc độ load biểu đồ.</p>
+                        <button class="btn-chaos yellow" onclick="runChaos('SEED_DATA', 'Tiến hành bơm 50 giao dịch ảo vào DB...', 'warn')">
+                            <i class="fa-solid fa-bolt"></i> BƠM DỮ LIỆU ẢO
+                        </button>
+                    </div>
+
+                    <div class="chaos-card success">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px;"><i class="fa-solid fa-gamepad me-2" style="color: #10b981;"></i> Auto-Seed Quests (Gamification)</h3>
+                        <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Reset và tự động tạo ra bộ Nhiệm vụ chuẩn mực cho khu vực giải trí (Khu Vui Chơi).</p>
+                        <button class="btn-chaos green" onclick="runChaos('SEED_QUESTS', 'Đang thiết lập bộ Nhiệm vụ Gamification vào DB...', 'success')">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> KHỞI TẠO BỘ NHIỆM VỤ
+                        </button>
+                    </div>
+
+                    <div class="chaos-card info">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px;"><i class="fa-solid fa-shield-halved text-primary me-2" style="color: #3b82f6;"></i> Test Rate Limiting</h3>
+                        <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Gửi 500 request nộp tiền/giây để xem hệ thống chặn Spam thế nào.</p>
+                        <button class="btn-chaos blue" onclick="runChaos('RATE_LIMIT', 'Bắn 500 requests/s vào hệ thống...', 'info')">
+                            <i class="fa-solid fa-bomb"></i> BẮN SPAM REQUEST
+                        </button>
+                    </div>
+
+                </div>
+
+                <div>
+                    <div class="chaos-card" style="height: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; font-size: 16px;"><i class="fa-solid fa-terminal me-2 text-success" style="color: #10b981;"></i> System Terminal</h3>
+                            <button onclick="document.getElementById('terminal-box').innerHTML='<div class=\'terminal-line\'>> Terminal cleared.</div>'" style="background: transparent; border: 1px solid #444; color: #888; border-radius: 5px; padding: 4px 8px; cursor: pointer; font-size: 10px;">Clear</button>
+                        </div>
+                        
+                        <div class="terminal-window" id="terminal-box" style="flex: 1;">
+                            <div class="terminal-line">> System initialized. Ready for testing.</div>
+                            <div class="terminal-line">> Connected to FundSmart Database.</div>
+                            <div class="terminal-line">> Awaiting Chaos commands...</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hàm gọi API thật xuống Backend Django
+        function runChaos(actionCode, cmdMessage, colorClass) {
+            const box = document.getElementById('terminal-box');
+            
+            // In lệnh người dùng gõ
+            const cmdDiv = document.createElement('div');
+            cmdDiv.className = `terminal-line ${colorClass}`;
+            cmdDiv.innerText = `\n> root@tester:~# ${cmdMessage}`;
+            box.appendChild(cmdDiv);
+            box.scrollTop = box.scrollHeight;
+
+            // In dòng loading...
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'terminal-line';
+            loadingDiv.innerText = `[SYS] Đang kết nối Backend...`;
+            box.appendChild(loadingDiv);
+
+            // GỌI API THẬT
+            const formData = new FormData();
+            formData.append('action', actionCode);
+
+            fetch('/api/chaos/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("API Route Not Found (404)");
+                return response.json();
+            })
+            .then(data => {
+                loadingDiv.remove(); // xóa chữ loading
+                
+                const resDiv = document.createElement('div');
+                // Gán màu tùy theo status backend trả về
+                if (data.status === 'error') resDiv.className = 'terminal-line error';
+                else if (data.status === 'warn') resDiv.className = 'terminal-line warn';
+                else if (data.status === 'success') resDiv.className = 'terminal-line success';
+                else resDiv.className = 'terminal-line info';
+                
+                resDiv.innerHTML = data.message;
+                box.appendChild(resDiv);
+                box.scrollTop = box.scrollHeight;
+            })
+            .catch(error => {
+                loadingDiv.remove();
+                const errDiv = document.createElement('div');
+                errDiv.className = 'terminal-line error';
+                errDiv.innerText = `[FATAL] Mất kết nối tới Server! Chi tiết: ${error.message}`;
+                box.appendChild(errDiv);
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+    </script>
+</body>
+</html>

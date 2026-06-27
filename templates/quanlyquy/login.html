@@ -1,0 +1,116 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'quanlyquy/logo.ico' %}">
+    <meta charset="UTF-8">
+    <title>Đăng nhập | FundSmart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/auth.css' %}">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+    <div class="top-utilities">
+        <div class="lang-dropdown">
+            <button class="icon-btn" id="current-lang"><i class="fa-solid fa-globe"></i> VN</button>
+            <div class="lang-menu">
+                <a href="javascript:void(0)" onclick="changeLanguage('vi')">🇻🇳 Tiếng Việt</a>
+                <a href="javascript:void(0)" onclick="changeLanguage('en')">🇬🇧 English</a>
+            </div>
+        </div>
+        <button class="icon-btn" id="theme-toggle"><i class="fa-solid fa-moon"></i></button>
+    </div>
+
+    <div class="auth-wrapper">
+        <div class="auth-visual" style="background: url('/media/dangnhap.jpg') no-repeat center center !important; background-size: cover !important;">
+            <div class="visual-content" style="width: 85%; margin: 0 auto; text-align: center; padding: 20px;">
+                <div class="logo-box-large" style="margin: 0 auto 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">F</div>
+                <h1 id="visual-title" style="color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.9), 0px 0px 15px rgba(0,0,0,0.7); font-weight: 900; letter-spacing: 0.5px;">Chào mừng trở lại!</h1>
+                <p id="visual-desc" style="color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.9), 0px 0px 12px rgba(0,0,0,0.8); line-height: 1.6; font-size: 15px; font-weight: 500;">
+                    Nền tảng ICMS giúp bạn quản lý dòng tiền lớp học minh bạch, an toàn và hoàn toàn tự động.
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-form-container">
+            <h2 id="form-title">Đăng nhập</h2>
+            <p id="form-subtitle">Nhập thông tin để tiếp tục vào hệ thống</p>
+            
+            {% if messages %}
+                <div class="messages-container" style="margin-bottom: 20px;">
+                    {% for message in messages %}
+                        <div style="padding: 12px 15px; border-radius: 12px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 10px; 
+                            background: {% if message.tags == 'error' %}#fef2f2{% else %}#f0fdf4{% endif %}; 
+                            color: {% if message.tags == 'error' %}#ef4444{% else %}#10b981{% endif %};
+                            border: 1px solid {% if message.tags == 'error' %}#fecaca{% else %}#bbf7d0{% endif %};
+                            animation: shake 0.5s ease;">
+                            <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <style>
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        25% { transform: translateX(-5px); }
+                        75% { transform: translateX(5px); }
+                    }
+                </style>
+            {% endif %}
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label id="label-user">Tên đăng nhập / Username</label>
+                    <input type="text" name="username" placeholder="Nhập username" required>
+                </div>
+                
+                <div class="form-group password-group">
+                    <label id="label-pass">Mật khẩu / Password</label>
+                    <div class="input-with-icon" style="position: relative;">
+                        <input type="password" name="password" id="pwd-input" placeholder="••••••••" required>
+                        <i class="fa-solid fa-eye" id="toggle-pwd" style="cursor:pointer; position:absolute; right:15px; top:16px; color:#94a3b8; z-index: 10;"></i>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1;">
+                        <input type="checkbox" name="remember_me"> 
+                        <span id="text-remember">Ghi nhớ tôi</span>
+                    </label>
+                    <a href="{% url 'password_reset' %}" class="forgot-link" id="text-forgot" style="color: var(--primary); font-size: 13px; font-weight: 600;">Quên mật khẩu?</a>
+                </div>
+
+                <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+                    <div class="g-recaptcha" data-sitekey="6LdkaoUsAAAAAPFYnV6w0rTnOX7uAbVA97NIBZGJ"></div>
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <span id="text-btn-login">ĐĂNG NHẬP</span> <i class="fa-solid fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <div class="auth-divider"><span id="text-or">Hoặc đăng nhập bằng</span></div>
+
+            <div class="social-login-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <a href="{% provider_login_url 'google' %}" class="btn-social google">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 20px;"> Google
+                </a>
+                <a href="{% provider_login_url 'facebook' %}" class="btn-social facebook" style="background: #1877F2; color: white;">
+                    <i class="fa-brands fa-facebook-f"></i> Facebook
+                </a>
+                <a href="{% provider_login_url 'github' %}" class="btn-social github" style="grid-column: span 2; background: #24292e; color: white; justify-content: center;">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+
+            <div class="footer-text">
+                <span id="text-newbie">Tân binh lớp mình?</span> <a href="{% url 'register' %}" id="text-create-acc">Tạo tài khoản ngay</a>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'quanlyquy/js/auth.js' %}"></script>
+</body>
+</html>

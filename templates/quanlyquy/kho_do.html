@@ -1,0 +1,18 @@
+{% for item in kho_do %}
+<div class="item-card">
+    <h4>{{ item.qua_tang.ten_qua }}</h4>
+    
+    {% if item.qua_tang.loai_qua == 'VOUCHER' %}
+        <div class="voucher-box">
+            <span>Mã của sếp:</span>
+            <strong class="code">FUND-{{ item.id }}-{{ item.ngay_doi|date:"Y" }}</strong>
+            <p>(Đưa mã này cho thủ quỹ khi đóng tiền quỹ tháng sau)</p>
+        </div>
+    {% elif item.qua_tang.loai_qua == 'HIEN_VAT' %}
+        <div class="physical-box">
+            <span class="status">Trạng thái: {{ item.get_trang_thai_display }}</span>
+            <p>📍 Địa điểm: Nhận trực tiếp tại bàn thủ quỹ vào giờ ra chơi.</p>
+        </div>
+    {% endif %}
+</div>
+{% endfor %}

@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Cài Đặt Hệ Thống | FundSmart</title>
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/settings.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="theme-gamification">
+    <div class="app-container">
+        <div class="main-content" style="flex: 1; padding: 35px; overflow-y: auto;">
+            <h1 style="color: #fff; font-weight: 900; margin-bottom: 30px;">
+                <i class="fa-solid fa-sliders text-primary"></i> Cài Đặt Hệ Thống
+            </h1>
+
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3 style="color: #fff; font-size: 16px;"><i class="fa-solid fa-hand-holding-dollar me-2"></i> Tài Chính</h3>
+                    <p style="color: #64748b; font-size: 12px;">Thiết lập mức đóng quỹ mặc định và lãi suất.</p>
+                    <button class="btn-advanced" style="border-color: var(--theme-primary); color: var(--theme-primary);">CẬP NHẬT NHANH</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3 style="color: #fff; font-size: 16px;"><i class="fa-solid fa-gamepad me-2"></i> Gamification</h3>
+                    <p style="color: #64748b; font-size: 12px;">Cấu hình tỉ lệ trúng thưởng và nhiệm vụ.</p>
+                    <button class="btn-advanced">CHỈNH SỬA</button>
+                </div>
+
+                <div class="settings-card" style="border-style: dashed;">
+                    <h3 style="color: #94a3b8; font-size: 16px;"><i class="fa-solid fa-gears me-2"></i> Hệ Thống</h3>
+                    <p style="color: #475569; font-size: 12px;">Truy cập trực tiếp Database Django Admin.</p>
+                    <a href="/admin/quanlyquy/" class="btn-advanced" style="background: rgba(255,255,255,0.05);">
+                        VÀO TRANG ADMIN NÂNG CAO <i class="fa-solid fa-arrow-up-right-from-square ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

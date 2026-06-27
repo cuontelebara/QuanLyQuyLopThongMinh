@@ -1,0 +1,171 @@
+/* ======================================================
+   CSS RIÊNG CHO PHÂN HỆ GAMIFICATION (TRẠM GIẢI TRÍ)
+   ====================================================== */
+/* TĂNG PADDING CHO CÁC Ô TRÊN BẢNG */
+    #gacha-details-popup .table-gacha th,
+    #gacha-details-popup .table-gacha td {
+        padding: 15px 20px; /* <--- Số này càng lớn thì ô càng bự (trên-dưới, trái-phải) */
+        font-size: 16px;    /* Tăng cỡ chữ lên tí cho bự */
+    }
+
+    /* LÀM CHO CHỮ BỰ HƠN KHI HOVER */
+    #gacha-details-popup .table-gacha tbody tr:hover {
+        font-weight: 700;
+        background: rgba(255,255,255,0.05);
+    }
+.game-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 25px; }
+.sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+
+/* Thẻ bài (Card) dạng Kính mờ */
+.game-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px; padding: 25px;
+    backdrop-filter: blur(15px); transition: 0.3s ease;
+}
+.game-card:hover { 
+    transform: translateY(-5px); 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+}
+
+.game-title { 
+    margin: 0 0 15px 0; 
+    color: white; 
+    font-size: 16px; display: flex; align-items: center; gap: 10px; font-weight: 900; text-transform: uppercase;
+}
+
+/* ================= CSS ANIMATIONS GAMING ================= */
+/* 1. Hiệu ứng Bay lơ lửng cho Icon */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+}
+.anim-float { animation: float 3s ease-in-out infinite; }
+
+/* 2. Hiệu ứng Hào quang đập theo nhịp (Nút bấm) */
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.anim-pulse { animation: pulse-glow 2s infinite; }
+
+/* 3. Hiệu ứng Chữ lấp lánh (Shimmer) */
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+.text-gaming-gold {
+    background: linear-gradient(90deg, #fbbf24 0%, #fffbeb 40%, #f59e0b 60%, #fbbf24 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    font-weight: 900;
+}
+
+/* 4. Khung viền RGB Gaming */
+@keyframes border-rgb {
+    0% { border-color: rgba(239, 68, 68, 0.4); }
+    33% { border-color: rgba(59, 130, 246, 0.4); }
+    66% { border-color: rgba(16, 185, 129, 0.4); }
+    100% { border-color: rgba(239, 68, 68, 0.4); }
+}
+.border-gaming { animation: border-rgb 4s linear infinite; }
+
+/* ================= Hiệu ứng Vòng Quay (Gacha) ================= */
+.wheel-container { 
+    position: relative; width: 160px; height: 160px; margin: 0 auto 25px auto; 
+    display: flex; justify-content: center; align-items: center; 
+}
+.wheel { 
+    position: absolute; width: 100%; height: 100%; border-radius: 50%; 
+    background: conic-gradient(#ef4444 0% 12.5%, #f97316 12.5% 25%, #f59e0b 25% 37.5%, #84cc16 37.5% 50%, #10b981 50% 62.5%, #06b6d4 62.5% 75%, #3b82f6 75% 87.5%, #8b5cf6 87.5% 100%);
+    border: 6px solid rgba(255,255,255,0.1); 
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    animation: spinSlow 15s linear infinite; box-sizing: border-box; 
+    transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.wheel-center { 
+    position: relative; z-index: 10; width: 120px; height: 120px; 
+    background: #0f172a; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+@keyframes spinSlow { 100% { transform: rotate(360deg); } }
+
+/* ================= Bảng Vàng Rank ================= */
+.rank-item { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 16px; 
+    margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s;
+}
+.rank-item:hover { border-color: rgba(251, 191, 36, 0.5); background: rgba(0,0,0,0.4); transform: scale(1.02); }
+.rank-1 { background: linear-gradient(135deg, #fde047, #f59e0b); color: #78350f; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.5); transform: scale(1.1); }
+.rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #1e293b; font-weight: 900;}
+.rank-3 { background: linear-gradient(135deg, #fed7aa, #c2410c); color: #431407; font-weight: 900;}
+.rank-badge { 
+    width: 35px; height: 35px; border-radius: 10px; display: flex; 
+    align-items: center; justify-content: center; font-weight: 900; font-size: 16px; 
+}
+
+/* Viền đa sắc RGB lấp lánh chuyên nghiệp */
+@keyframes rgb-glow {
+    0% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000; border-color: #ff0000; }
+    33% { box-shadow: 0 0 15px #00ff00, inset 0 0 15px #00ff00; border-color: #00ff00; }
+    66% { box-shadow: 0 0 15px #0000ff, inset 0 0 15px #0000ff; border-color: #0000ff; }
+    100% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000; border-color: #ff0000; }
+}
+.border-rainbow { animation: rgb-glow 4s linear infinite; }
+
+/* FIX CĂN GIỮA VÀ KIM CHỈ VÒNG QUAY GACHA */
+.wheel-wrapper {
+    position: relative;
+    width: 200px; height: 200px;
+    margin: 0 auto 30px auto;
+    display: flex; align-items: center; justify-content: center;
+}
+.wheel-pointer {
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent; border-right: 15px solid transparent;
+    border-top: 25px solid #ef4444; z-index: 20; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+}
+.wheel { 
+    width: 100%; height: 100%; border-radius: 50%; 
+    background: conic-gradient(#ef4444 0deg 45deg, #f97316 45deg 90deg, #f59e0b 90deg 135deg, #84cc16 135deg 180deg, #10b981 180deg 225deg, #06b6d4 225deg 270deg, #3b82f6 270deg 315deg, #8b5cf6 315deg 360deg);
+    border: 6px solid #1e293b; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); /* Hiệu ứng quay mượt dừng chậm */
+}
+.wheel-center { 
+    position: absolute; width: 60px; height: 60px; 
+    background: #0f172a; border-radius: 50%; z-index: 10;
+    display: flex; align-items: center; justify-content: center; border: 4px solid #fffbeb;
+}
+
+/* Nâng cấp Bảng Vàng */
+.rank-item { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 15px; background: rgba(255,255,255,0.03); border-radius: 16px; 
+    margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.02); transition: 0.3s;
+    position: relative; overflow: hidden;
+}
+.rank-item:hover { border-color: rgba(251, 191, 36, 0.5); background: rgba(0,0,0,0.6); transform: translateX(5px); }
+
+/* Hào quang cho Top 1, 2, 3 */
+.rank-1 { box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); }
+.rank-2 { box-shadow: inset 0 0 20px rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); }
+.rank-3 { box-shadow: inset 0 0 20px rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); }
+
+/* Huy Hiệu Icon */
+.badge-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px; font-size: 11px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+    border: 1px solid rgba(255,255,255,0.2); margin-right: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s;
+}
+.badge-icon:hover { transform: scale(1.2); border-color: #fbbf24; color: #fbbf24; }
+

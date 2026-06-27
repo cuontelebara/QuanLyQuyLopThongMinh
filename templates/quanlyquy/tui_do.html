@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Túi Đồ Của Tôi | FundSmart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/dashboard.css' %}">
+    
+    <style>
+        body.theme-inventory {
+            background-color: #0a0a0c !important; 
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.15) 0%, transparent 40%), 
+                radial-gradient(circle at 90% 90%, rgba(239, 68, 68, 0.15) 0%, transparent 40%) !important;
+            background-attachment: fixed !important;
+            color: #f8fafc;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container đồng bộ với hiệu ứng kính mờ */
+        .app-container {
+            width: 96%;
+            height: 92vh;
+            background: rgba(18, 18, 22, 0.7);
+            backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+        }
+
+        /* Sidebar Full Size đồng bộ */
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 700;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2));
+            color: #fff !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 4px;
+            height: 20px;
+            background: #a855f7;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+        }
+
+        /* Grid 3 cột cố định */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        /* Card vật phẩm nịnh mắt */
+        .item-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 30px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .item-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.08);
+            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .status-pill {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #10b981;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+
+<body class="theme-inventory">
+    <div class="app-container">
+        
+        <div class="sidebar">
+            <div style="margin-bottom: 45px; padding-left: 10px;">
+                <div style="font-weight: 900; font-size: 26px; color: #fff;">FundSmart <span style="font-size: 10px; background: #ef4444; padding: 3px 8px; border-radius: 8px; vertical-align: middle;">PRO</span></div>
+            </div>
+
+            <!-- Avatar Section đồng bộ -->
+            <div style="background: rgba(255,255,255,0.03); border-radius: 24px; padding: 18px; display: flex; align-items: center; gap: 15px; margin-bottom: 35px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, #a855f7, #6366f1); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <div style="font-size: 15px; font-weight: 800; color: #fff;">{{ request.user.username }}</div>
+                    <div style="font-size: 11px; color: #a855f7; font-weight: 700;">THỦ QUỸ</div>
+                </div>
+            </div>
+
+            <a href="/" class="sidebar-link"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+            <a href="/gamification/" class="sidebar-link"><i class="fa-solid fa-gamepad" style="color: #D3A376;"></i> Khu Vui Chơi</a>
+            <a href="/cua-hang/" class="sidebar-link"><i class="fa-solid fa-store" style="color: #F6BCBA;"></i> Cửa Hàng</a>
+            <a href="/tui-do/" class="sidebar-link active"><i class="fa-solid fa-briefcase" style="color: #60a5fa;"></i> Túi Đồ Của Tôi</a>
+
+            <a href="/logout/" class="sidebar-link" style="margin-top: auto; color: #fb7185;"><i class="fa-solid fa-power-off"></i> Đăng xuất</a>
+        </div>
+
+        <div class="main-content">
+            <div style="margin-bottom: 50px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="font-size: 38px; font-weight: 900; margin: 0; color: #E8D8C4;">Túi Đồ Của Tôi</h1>
+                    <p style="color: #64748b; margin-top: 10px;">Sếp đang sở hữu những đặc quyền cực phẩm sau đây.</p>
+                </div>
+                
+                <div class="filter-box-premium" style="position: relative; display: inline-block;">
+   <div class="filter-wrapper" style="position: relative; width: 220px;">
+    <select onchange="filterInventory()" id="filterLoai" 
+        style="width: 100%; appearance: none; -webkit-appearance: none; 
+               background: rgba(255, 255, 255, 0.05); 
+               border: 1px solid rgba(168, 85, 247, 0.3); 
+               color: #fff; 
+               padding: 14px 20px; 
+               border-radius: 20px; 
+               cursor: pointer; 
+               outline: none; 
+               font-weight: 800; 
+               font-size: 14px;
+               backdrop-filter: blur(15px);
+               transition: all 0.3s ease;
+               padding-left: 45px; /* Để chỗ cho icon giả lập */">
+        <option value="ALL" style="background: #1a1a1e;">Tất cả báu vật</option>
+        <option value="VOUCHER" style="background: #1a1a1e;">Voucher ưu đãi</option>
+        <option value="HIEN_VAT" style="background: #1a1a1e;">Quà hiện vật</option>
+    </select>
+
+    <!-- Icon cố định bên trái (Sẽ thay đổi theo lựa chọn bằng JS nếu sếp muốn, nhưng hiện tại cứ để icon tổng quát cho Pro) -->
+    <i class="fa-solid fa-boxes-stacked" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #a855f7; font-size: 16px; pointer-events: none;"></i>
+    
+    <!-- Mũi tên bên phải -->
+    <i class="fa-solid fa-chevron-down" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none;"></i>
+
+    <style>
+        #filterLoai:hover {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: #a855f7;
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.2);
+        }
+        /* Mẹo để bỏ cái ô vuông: Không dùng mã icon trong option nữa mà dùng text thuần, 
+           trang trí bằng icon tuyệt đối bên ngoài cho sang */
+    </style>
+</div>
+    
+    <!-- Icon mũi tên xịn xò -->
+    <i class="fa-solid fa-chevron-down" 
+       style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); 
+              pointer-events: none; color: #a855f7; font-size: 12px;"></i>
+
+    <style>
+        #filterLoai:hover {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: #a855f7;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+            transform: translateY(-2px);
+        }
+        /* Style cho các option bên trong trên trình duyệt hiện đại */
+        #filterLoai option {
+            padding: 15px;
+        }
+    </style>
+</div>
+            </div>
+
+            <div class="inventory-grid">
+                {% for item in kho_items %}
+                <div class="item-card item-type-{{ item.qua_tang.loai_qua }}">
+                    <div class="status-pill">Chưa dùng</div>
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.05); border-radius: 18px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; font-size: 24px; color: #a855f7;">
+                        <i class="fa-solid {% if item.qua_tang.loai_qua == 'VOUCHER' %}fa-ticket{% else %}fa-box-open{% endif %}"></i>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 800; color: #fff; margin: 0 0 10px 0;">{{ item.qua_tang.ten_qua }}</h3>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+                        <i class="fa-solid fa-location-dot" style="margin-right: 8px; color: #a855f7;"></i>Nhận tại bàn Thủ quỹ lớp.
+                    </p>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1/-1; text-align: center; padding: 120px 0; opacity: 0.3;">
+                    <i class="fa-solid fa-box-open" style="font-size: 80px; margin-bottom: 25px;"></i>
+                    <p style="font-size: 22px; font-weight: 700;">Kho báu đang trống!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterInventory() {
+            const val = document.getElementById('filterLoai').value;
+            const cards = document.querySelectorAll('.item-card');
+            cards.forEach(card => {
+                card.style.display = (val === 'ALL' || card.classList.contains('item-type-' + val)) ? 'block' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

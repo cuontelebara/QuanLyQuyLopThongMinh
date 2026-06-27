@@ -1,0 +1,65 @@
+{% extends "unfold/layouts/base_simple.html" %}
+{% block content %}
+<style>
+    .fintech-wrapper { padding: 40px; font-family: 'Inter', sans-serif; max-width: 1200px; margin: 0 auto; }
+    .fintech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px; }
+    .f-card { background: var(--bg-surface, #ffffff); border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+    .dark .f-card { background: #1e293b; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+    .f-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
+    .f-match::before { background: #10b981; }
+    .f-missing::before { background: #f43f5e; }
+    .f-doubt::before { background: #f59e0b; }
+    .f-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; margin-bottom: 24px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .bg-match { background: #10b981; } .bg-missing { background: #f43f5e; } .bg-doubt { background: #f59e0b; }
+    .f-item { padding: 16px; border-radius: 14px; margin-bottom: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+    .item-match { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .item-missing { background: rgba(244, 63, 94, 0.1); color: #e11d48; border: 1px solid rgba(244, 63, 94, 0.2); }
+    .item-doubt { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .dark .item-match { color: #34d399; } .dark .item-missing { color: #fb7185; } .dark .item-doubt { color: #fbbf24; }
+</style>
+
+<div class="fintech-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 style="font-size: 36px; font-weight: 900; color: #4f46e5; margin-bottom: 8px;">Kết quả đối soát tài chính</h1>
+            <p style="color: #64748b; font-size: 15px; font-weight: 500;">Báo cáo phân tích sai lệch dòng tiền tự động</p>
+        </div>
+        <a href="../" style="background: #4f46e5; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 800; text-decoration: none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">← Quay lại Lịch sử</a>
+    </div>
+
+    <div class="fintech-grid">
+        <div class="f-card f-match">
+            <div class="f-icon bg-match">✓</div>
+            <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 20px; color: inherit;">HOÀN HẢO ({{ results.match|length }})</h3>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                {% for m in results.match %}
+                <div class="f-item item-match"><span>{{ m }}</span> <span>✓</span></div>
+                {% empty %}<div style="text-align: center; padding: 30px; color: #94a3b8; font-style: italic; border: 2px dashed #e2e8f0; border-radius: 16px;">Không có dữ liệu</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="f-card f-missing">
+            <div class="f-icon bg-missing">!</div>
+            <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 20px; color: inherit;">WEB THIẾU ({{ results.missing_sys|length }})</h3>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                {% for m in results.missing_sys %}
+                <div class="f-item item-missing">
+                    <span>{{ m }}</span>
+                    <span style="font-size: 10px; background: #f43f5e; color: white; padding: 4px 8px; border-radius: 6px;">CẦN BỔ SUNG</span>
+                </div>
+                {% empty %}<div style="text-align: center; padding: 30px; color: #94a3b8; font-style: italic;">Tuyệt vời, không thiếu!</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="f-card f-doubt">
+            <div class="f-icon bg-doubt">?</div>
+            <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 20px; color: inherit;">NGÂN HÀNG SAI ({{ results.missing_bank|length }})</h3>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                {% for m in results.missing_bank %}
+                <div class="f-item item-doubt"><span>{{ m }}</span> <span>?</span></div>
+                {% empty %}<div style="text-align: center; padding: 30px; color: #94a3b8; font-style: italic;">Không có sai lệch</div>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
