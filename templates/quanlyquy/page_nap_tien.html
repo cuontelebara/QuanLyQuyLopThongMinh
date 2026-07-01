@@ -1,0 +1,458 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Nạp & Thanh Toán | FundSmart Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #06080c;
+            --mint: #10b981;
+            --purple: #8b5cf6;
+            --text-main: #ffffff;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .container-premium { width: 100%; max-width: 980px; padding: 30px 20px; box-sizing: border-box; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted);
+            text-decoration: none; font-size: 13px; font-weight: 700; transition: 0.3s;
+            margin-bottom: 30px; background: rgba(255, 255, 255, 0.02); padding: 10px 18px;
+            border-radius: 12px; border: 1px solid var(--border);
+        }
+        .back-link:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.06); transform: translateX(-3px); }
+
+        .portal-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: stretch; }
+        @media (max-width: 868px) { .portal-grid { grid-template-columns: 1fr; gap: 30px; } }
+
+        .panel-left, .panel-right {
+            background: rgba(255, 255, 255, 0.015); border: 1px solid var(--border);
+            border-radius: 28px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+        .panel-left { display: flex; flex-direction: column; justify-content: space-between; }
+        .panel-right { display: flex; flex-direction: column; justify-content: center; }
+
+        .brand-heading {
+            font-size: 24px; font-weight: 900; margin: 0 0 6px 0;
+            background: linear-gradient(90deg, var(--mint) 0%, var(--purple) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;
+        }
+        .brand-sub { font-size: 13px; color: var(--text-muted); margin: 0 0 30px 0; line-height: 1.5; font-weight: 500; }
+
+        .premium-visual-card {
+            background: linear-gradient(135deg, #11131e 0%, #080911 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 24px; padding: 30px;
+            position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05); margin-bottom: 20px;
+        }
+        .card-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .visa-logo {
+            font-size: 32px; font-weight: 900; font-style: italic;
+            background: linear-gradient(90deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .card-label { font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 4px 0; }
+        .card-main-balance { font-size: 30px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; margin: 0 0 35px 0; }
+        .card-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; font-family: monospace; font-size: 13px; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
+
+        .tab-bar { display: flex; gap: 25px; border-bottom: 1px solid var(--border); margin-bottom: 35px; padding-bottom: 12px; }
+        .tab-item { font-size: 14px; font-weight: 800; color: var(--text-muted); cursor: pointer; position: relative; transition: 0.3s; display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .tab-item:hover, .tab-item.active { color: var(--text-main); }
+        .tab-item::after { content: ''; position: absolute; bottom: -13px; left: 0; width: 100%; height: 2px; background: transparent; transform: scaleX(0); transition: 0.3s ease; }
+        .tab-item.active[data-tab="wallet"]::after { background: var(--mint); transform: scaleX(1); }
+        .tab-item.active[data-tab="fund"]::after { background: var(--purple); transform: scaleX(1); }
+
+        .amount-input-zone { text-align: center; margin-bottom: 30px; }
+        .amount-label { font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 10px; }
+        .input-wrapper-box { display: inline-flex; align-items: center; justify-content: center; gap: 12px; }
+        .huge-amount-input { background: transparent; border: none; outline: none; font-size: 48px; font-weight: 800; color: var(--text-main); text-align: center; width: 280px; letter-spacing: -1px; font-family: inherit; }
+        .huge-amount-input::placeholder { color: rgba(255,255,255,0.1); }
+        .currency-tag-premium { font-size: 18px; font-weight: 800; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border); }
+
+        .qr-render-zone { display: none; text-align: center; background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 20px; padding: 25px; margin-bottom: 25px; animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .qr-image-frame { background: white; padding: 12px; border-radius: 16px; display: inline-block; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .qr-image-frame img { display: block; width: 200px; height: 200px; }
+        .info-block-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 13px; }
+        .info-lbl { color: var(--text-muted); font-weight: 600; }
+        .info-val { color: var(--text-main); font-weight: 700; font-family: monospace; }
+
+        .form-block { margin-bottom: 22px; }
+        .form-block label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+        .premium-input-field { width: 100%; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border); padding: 14px 16px; border-radius: 14px; color: var(--text-main); font-size: 13px; font-weight: 600; outline: none; box-sizing: border-box; }
+
+        .btn-action-premium { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 14px; font-weight: 800; color: #fff; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .panel-right[data-active-theme="wallet"] .btn-action-premium { background: var(--mint); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2); }
+        .panel-right[data-active-theme="fund"] .btn-action-premium { background: var(--purple); box-shadow: 0 8px 24px rgba(139, 85, 247, 0.2); }
+
+        .form-view-container { display: none; }
+        .form-view-container.active { display: block; }
+
+        /* ================== CSS CHO THẺ BÀI 3D ================== */
+        .payment-targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+        .target-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .target-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.4);
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.05), rgba(255,255,255,0.01));
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .target-card.active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            border: 2px solid #10b981;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+            transform: translateY(-5px);
+        }
+        .target-card i { font-size: 28px; margin-bottom: 12px; color: #64748b; transition: 0.3s; }
+        .target-card.active i { color: #10b981 !important; transform: scale(1.15) rotate(-5deg); }
+        .target-card h4 { font-size: 13px; font-weight: 800; color: #e2e8f0; margin: 0 0 6px 0; }
+        .target-card p { font-size: 11px; color: #64748b; margin: 0; }
+        .target-card.active p { color: #34d399; font-weight: bold; }
+        
+        .debt-tag {
+            position: absolute; top: 12px; right: -28px; background: #ef4444; color: white;
+            font-size: 9px; font-weight: 900; padding: 3px 30px; transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4); letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-premium">
+        <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Quay lại Tổng quan</a>
+        
+        <div class="portal-grid">
+            <div class="panel-left">
+                <div>
+                    <h2 class="brand-heading">FundSmart VietQR</h2>
+                    <p class="brand-sub">QR Code gạch nợ thông minh – Thanh toán đúng một lần, xác nhận ngay lập tức.</p>
+                    
+                    <div class="premium-visual-card">
+                        <div class="card-top-row">
+                            <span class="visa-logo">Visa</span>
+                        </div>
+                        <p class="card-label">Tài khoản ví Web</p>
+                        <div class="card-main-balance" id="card-balance-render">*** đ</div>
+                        <div class="card-bottom-row">
+                            <span>9999 0000 1111 {{ request.user.id }}</span>
+                            <span>05/28</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6;">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--mint); font-size: 16px;"></i>
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">TỰ ĐỘNG KHỚP LỆNH SEPAY WEBHOOK</span>
+                </div>
+            </div>
+
+            <div class="panel-right" id="theme-panel" data-active-theme="wallet">
+                <div class="tab-bar">
+                    <div class="tab-item active" data-tab="wallet">
+                        <i class="fa-solid fa-wallet"></i> Nạp Ví Web
+                    </div>
+                    <div class="tab-item" data-tab="fund">
+                        <i class="fa-solid fa-money-bill-transfer"></i> Nộp Quỹ Lớp
+                    </div>
+                </div>
+
+                <div class="form-view-container active" id="pane-wallet">
+                    <div class="amount-input-zone">
+                        <span class="amount-label">Nhập số tiền muốn nạp</span>
+                        <div class="input-wrapper-box">
+                            <input type="text" id="walletRawAmount" class="huge-amount-input" placeholder="0" oninput="formatCurrencyRealtime(this)" required>
+                            <span class="currency-tag-premium">đ</span>
+                        </div>
+                    </div>
+
+                    <div class="qr-render-zone" id="wallet-qr-zone">
+                        <div class="qr-image-frame">
+                            <img id="wallet-qr-img" src="" alt="Mã VietQR">
+                        </div>
+                        <div style="margin-top: 20px; text-align: left;">
+                            <div class="info-block-item">
+                                <span class="info-lbl">Ngân hàng nhận:</span>
+                                <span class="info-val">MB BANK</span>
+                            </div>
+                            <div class="info-block-item">
+                                <span class="info-lbl">Số tiền nạp:</span>
+                                <span class="info-val" id="info-qr-amount" style="color: var(--mint); font-weight: 800;">0 đ</span>
+                            </div>
+                            <div class="info-block-item">
+                                <span class="info-lbl">Nội dung CK bắt buộc:</span>
+                                <span class="info-val" id="info-qr-content" style="color: #f59e0b; font-weight: 800;">NAP_MSSV</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-generate-wallet" class="btn-action-premium" onclick="executeNapViWeb()">
+                        TẠO MÃ QUÉT QR ĐỘNG <i class="fa-solid fa-qrcode"></i>
+                    </button>
+                </div>
+
+                <div class="form-view-container" id="pane-fund">
+                    <form id="form-fund">
+                        <div class="amount-input-zone">
+                            <span class="amount-label">Số tiền đóng quỹ</span>
+                            <div class="input-wrapper-box">
+                                <input type="text" id="fundRawAmount" class="huge-amount-input" placeholder="0" style="color: #a78bfa;" required>
+                                <span class="currency-tag-premium">VND</span>
+                            </div>
+                        </div>
+
+                        <div class="form-block">
+                            <label>Nội dung / Lý do đóng quỹ</label>
+                            <input type="text" id="fundRawReason" class="premium-input-field" placeholder="Ví dụ: Đóng quỹ lớp chung" required>
+                        </div>
+
+                        <div class="form-block">
+                            <label>Nộp quỹ cho mục tiêu / Đợt thu nào?</label>
+                            
+                            <div class="payment-targets-grid">
+                                <div class="target-card active" onclick="selectPaymentTarget(this, '', '', '', 'Quỹ Chung')">
+                                    <i class="fa-solid fa-piggy-bank"></i>
+                                    <h4>Quỹ Chung</h4>
+                                    <p>Nộp dự phòng</p>
+                                </div>
+                                
+                                {% for dt in danh_sach_dot_thu %}
+                                <div class="target-card" onclick="selectPaymentTarget(this, 'dot_thu', '{{ dt.id }}', '{{ dt.so_tien_can_nop|floatformat:0 }}', '{{ dt.ten_dot|escapejs }}')">
+                                    <div class="debt-tag">CÒN NỢ</div>
+                                    <i class="fa-solid fa-file-invoice-dollar" style="color: #f59e0b;"></i>
+                                    <h4>{{ dt.ten_dot }}</h4>
+                                    <p>Nợ: <span class="format-money-card">{{ dt.so_tien_can_nop|floatformat:0 }}</span> đ</p>
+                                </div>
+                                {% endfor %}
+
+                                {% for mt in danh_sach_muc_tieu %}
+                                <div class="target-card" onclick="selectPaymentTarget(this, 'muc_tieu', '{{ mt.id }}', '', '{{ mt.ten_muc_tieu|escapejs }}')">
+                                    <i class="fa-solid fa-bullseye" style="color: #3b82f6;"></i>
+                                    <h4>{{ mt.ten_muc_tieu }}</h4>
+                                    <p>Góp tùy tâm</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <input type="hidden" id="inp-dot-thu-id" name="dot_thu_id" value="">
+                            <input type="hidden" id="inp-muc-tieu-id" name="muc_tieu_id" value="">
+                        </div>
+
+                        <button type="submit" class="btn-action-premium">
+                            XÁC NHẬN TRÍCH VÍ ĐÓNG QUỸ <i class="fa-solid fa-circle-check"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USER_MSSV = "{{ request.user.thanhvien.mssv|default:request.user.username }}".toUpperCase().trim();
+        const rawBalanceStr = "{{ so_du_vi_web|default:0 }}".replace(/[^0-9]/g, "");
+        const walletBalanceBackend = rawBalanceStr ? parseInt(rawBalanceStr, 10) : 0;
+        
+        if (document.getElementById('card-balance-render')) {
+            document.getElementById('card-balance-render').innerText = walletBalanceBackend.toLocaleString('vi-VN') + ' đ';
+        }
+        
+        // Vừa vào trang là điền luôn nội dung mặc định
+        document.getElementById('fundRawReason').value = "Nộp Quỹ Chung - " + USER_MSSV;
+
+        document.querySelectorAll('.format-money-card').forEach(el => {
+            let val = parseFloat(el.innerText);
+            if(!isNaN(val)) el.innerText = val.toLocaleString('vi-VN');
+        });
+
+        function formatCurrencyRealtime(element) {
+            let selectionStart = element.selectionStart;
+            let oldLength = element.value.length;
+            let numValue = element.value.replace(/\D/g, "");
+            if (numValue === "") { element.value = ""; return; }
+            element.value = Number(numValue).toLocaleString('vi-VN'); 
+            let newLength = element.value.length;
+            let caretPosition = selectionStart + (newLength - oldLength);
+            element.setSelectionRange(caretPosition, caretPosition);
+        }
+
+        if (document.getElementById('walletRawAmount')) {
+            document.getElementById('walletRawAmount').addEventListener('input', function() { formatCurrencyRealtime(this); });
+        }
+        if (document.getElementById('fundRawAmount')) {
+            document.getElementById('fundRawAmount').addEventListener('input', function() { formatCurrencyRealtime(this); });
+        }
+
+        // 🌟 HÀM XỬ LÝ KHI BẤM CHỌN THẺ 3D
+        function selectPaymentTarget(element, type, id, tien_no, ten_muc_tieu) {
+            document.querySelectorAll('.target-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            
+            document.getElementById('inp-dot-thu-id').value = '';
+            document.getElementById('inp-muc-tieu-id').value = '';
+            
+            // 1. Tự động điền số tiền nợ
+            if (type === 'dot_thu') {
+                document.getElementById('inp-dot-thu-id').value = id;
+                if(tien_no) {
+                    let moneyInput = document.getElementById('fundRawAmount');
+                    moneyInput.value = tien_no;
+                    formatCurrencyRealtime(moneyInput);
+                }
+            } else if (type === 'muc_tieu') {
+                document.getElementById('inp-muc-tieu-id').value = id;
+                document.getElementById('fundRawAmount').value = '';
+            } else {
+                document.getElementById('fundRawAmount').value = '';
+            }
+
+            // 2. TỰ ĐỘNG ĐIỀN NỘI DUNG (TÊN QUỸ + MSSV)
+            const reasonInput = document.getElementById('fundRawReason');
+            if (ten_muc_tieu) {
+                reasonInput.value = "Nộp " + ten_muc_tieu + " - " + USER_MSSV;
+            } else {
+                reasonInput.value = "Nộp Quỹ Lớp Chung - " + USER_MSSV;
+            }
+        }
+
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                const themePanel = document.getElementById('theme-panel');
+                const paneWallet = document.getElementById('pane-wallet');
+                const paneFund = document.getElementById('pane-fund');
+
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                if (themePanel) themePanel.setAttribute('data-active-theme', tabName);
+
+                if (tabName === 'wallet') {
+                    if (paneFund) paneFund.classList.remove('active');
+                    if (paneWallet) paneWallet.classList.add('active');
+                } else {
+                    if (paneWallet) paneWallet.classList.remove('active');
+                    if (paneFund) paneFund.classList.add('active');
+                }
+            });
+        });
+
+        async function executeNapViWeb() {
+            const amountElement = document.getElementById('walletRawAmount');
+            const rawValue = amountElement.value.replace(/\D/g, ""); 
+            
+            if(!rawValue || rawValue <= 0) {
+                alert("Vui lòng điền số tiền hợp lệ sếp ơi!");
+                return;
+            }
+
+            const bankId = "MB"; 
+            const accountNo = "0947488528"; 
+            const content = "NAP " + USER_MSSV; 
+
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${rawValue}&addInfo=${encodeURIComponent(content)}`;
+            if (document.getElementById('wallet-qr-img')) {
+                document.getElementById('wallet-qr-img').src = qrUrl;
+                document.getElementById('info-qr-amount').innerText = Number(rawValue).toLocaleString('vi-VN') + ' đ';
+                document.getElementById('info-qr-content').innerText = content;
+                document.getElementById('wallet-qr-zone').style.display = 'block';
+            }
+            
+            const actionBtn = document.getElementById('btn-generate-wallet');
+            actionBtn.innerHTML = 'GIẢ LẬP: XÁC NHẬN CHUYỂN KHOẢN THÀNH CÔNG <i class="fa-solid fa-bolt"></i>';
+            
+            actionBtn.onclick = async function() {
+                if(!confirm("Hệ thống sẽ giả lập ngân hàng báo thành công để cộng tiền trực tiếp vào Ví Web của sếp?")) return;
+                
+                try {
+                    const response = await fetch('/api/nap-vi-web/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({ so_tien: rawValue, phuong_thuc: 'LOCAL_TEST_BANK' }) 
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        alert("🔴 LỖI BACKEND PYTHON:\n" + errorText.substring(0, 200));
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if(data.status === 'success') {
+                        alert("🟢 THÀNH CÔNG: " + data.message);
+                        location.reload(); 
+                    } else {
+                        alert("🔴 THẤT BẠI: " + data.message);
+                    }
+                } catch (e) {
+                    alert("❌ LỖI ĐƯỜNG TRUYỀN: Mạng sập giữa chừng, database an toàn!");
+                }
+            };
+        }
+
+        if (document.getElementById('form-fund')) {
+            document.getElementById('form-fund').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const rawAmount = document.getElementById('fundRawAmount').value.replace(/\D/g, "");
+                const inputReason = document.getElementById('fundRawReason').value;
+                
+                const dot_thu_id = document.getElementById('inp-dot-thu-id').value;
+                const muc_tieu_id = document.getElementById('inp-muc-tieu-id').value;
+
+                try {
+                    const response = await fetch('/api/nop-quy/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({
+                            so_tien: rawAmount,
+                            ly_do: inputReason,
+                            dot_thu_id: dot_thu_id || null,
+                            muc_tieu_id: muc_tieu_id || null,
+                            phuong_thuc: 'WEB_WALLET'
+                        })
+                    });
+                    const data = await response.json();
+                    alert(data.message);
+                    if(data.status === 'success') window.location.href = '/';
+                } catch (e) {
+                    alert("Lỗi kết nối API trích ví nộp quỹ!");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

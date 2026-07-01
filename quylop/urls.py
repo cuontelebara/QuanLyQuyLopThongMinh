@@ -5,6 +5,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from quanlyquy import views as quanlyquy_views
+from quanlyquy import views
 
 # Import bộ công cụ xử lý mật khẩu có sẵn của Django
 from django.contrib.auth import views as auth_views 
@@ -88,7 +90,17 @@ urlpatterns = [
      # --- 8 đổi quà  ---
     path('api/doi-qua/', views.api_doi_qua, name='api_doi_qua'),
     path('tui-do/', views.tui_do_view, name='tui_do'),
+    path('theo-doi-dau-tu/', views.theo_doi_dau_tu_view, name='theo_doi_dau_tu'),
+    path('api/nap-vi-web/', views.api_nap_vi_web, name='api_nap_vi_web'),
+    path('api/trich-vi-nop-quy/', views.api_trich_vi_nop_quy, name='api_trich_vi_nop_quy'),
+    path('nap-tien/', views.page_nap_tien_view, name='page_nap_tien'),
+    path('api/giai-tan-quy/<int:quy_id>/', views.giai_tan_quy_view, name='giai_tan_quy'),
+    path('kho-tai-nguyen/', views.kho_tai_nguyen_view, name='kho_tai_nguyen'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [
+        path('theo-doi-dau-tu/', views.theo_doi_dau_tu_view, name='theo_doi_dau_tu'),
+        
+    ]

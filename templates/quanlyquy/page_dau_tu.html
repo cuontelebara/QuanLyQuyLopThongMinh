@@ -1,0 +1,467 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo Dõi Đầu Tư & Biểu Quyết | FundSmart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'quanlyquy/css/dashboard.css' %}">
+    
+    <style>
+        body.theme-investment {
+            background-color: #0a0a0c !important; 
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.15) 0%, transparent 40%), 
+                radial-gradient(circle at 90% 90%, rgba(168, 85, 247, 0.15) 0%, transparent 40%) !important;
+            background-attachment: fixed !important;
+            color: #f8fafc;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 96%;
+            height: 92vh;
+            background: rgba(18, 18, 22, 0.7);
+            backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 700;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .sidebar-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+            color: #fff !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 4px;
+            height: 20px;
+            background: #6366f1;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+        }
+
+        .premium-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            margin-bottom: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .info-mini-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .realtime-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vote-badge {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-vote {
+            padding: 14px 28px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+    </style>
+</head>
+
+<body class="theme-investment">
+    <div class="app-container">
+        
+        <!-- SIDEBAR CHUẨN ĐỒNG BỘ -->
+        <div class="sidebar">
+            <div style="margin-bottom: 45px; padding-left: 10px;">
+                <div style="font-weight: 900; font-size: 26px; color: #fff;">FundSmart <span style="font-size: 10px; background: #ef4444; padding: 3px 8px; border-radius: 8px; vertical-align: middle;">PRO</span></div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border-radius: 24px; padding: 18px; display: flex; align-items: center; gap: 15px; margin-bottom: 35px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <div style="font-size: 15px; font-weight: 800; color: #fff;">{{ request.user.username }}</div>
+                    <div style="font-size: 11px; color: #6366f1; font-weight: 700;">THÀNH VIÊN</div>
+                </div>
+            </div>
+
+            <a href="/" class="sidebar-link"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+            <a href="/theo-doi-dau-tu/" class="sidebar-link active"><i class="fa-solid fa-chart-line" style="color: #a855f7;"></i> Theo Dõi Đầu Tư</a>
+            <a href="/gamification/" class="sidebar-link"><i class="fa-solid fa-gamepad" style="color: #D3A376;"></i> Khu Vui Chơi</a>
+            <a href="/cua-hang/" class="sidebar-link"><i class="fa-solid fa-store" style="color: #F6BCBA;"></i> Cửa Hàng</a>
+            <a href="/tui-do/" class="sidebar-link"><i class="fa-solid fa-briefcase" style="color: #60a5fa;"></i> Túi Đồ Của Tôi</a>
+
+            <form action="/logout/" method="POST" style="margin-top: auto; display: block; width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-link" style="color: #fb7185; border: none; background: transparent; width: 100%; text-align: left; cursor: pointer;">
+                    <i class="fa-solid fa-power-off"></i> Đăng xuất
+                </button>
+            </form>
+        </div>
+
+        <!-- MAIN CONTENT CHUẨN ĐỒNG BỘ -->
+        <div class="main-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- TIÊU ĐỀ & BADGE TRẠNG THÁI -->
+            <div style="margin-bottom: 50px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="font-size: 38px; font-weight: 900; margin: 0; color: #E8D8C4;">Quy Trình Đầu Tư</h1>
+                    <p style="color: #64748b; margin-top: 10px;">Đạt trên 75% biểu quyết của lớp để giải ngân sinh lãi.</p>
+                </div>
+                <div>
+                    {% if trang_thai_dau_tu == 'DANG_DAU_TU' %}
+                        <div class="realtime-badge">
+                            <span class="live-dot"></span> Đang Đầu Tư Sinh Lãi
+                        </div>
+                    {% elif trang_thai_dau_tu == 'CHO_DOI_GIAI_NGAN' %}
+                        <div class="vote-badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2);">
+                            <i class="fa-solid fa-hourglass-half fa-spin"></i> Đang Đối Soát Tất Toán (Hạn 2 ngày)
+                        </div>
+                    {% elif trang_thai_dau_tu == 'DA_GIAI_NGAN' %}
+                        <div class="realtime-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2);">
+                            <i class="fa-solid fa-wallet"></i> Đã Kết Toán & Giải Ngân Về Ví
+                        </div>
+                    {% else %}
+                        <div class="vote-badge">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i> Đang Thu Thập Phiếu Bầu
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- NỘI DUNG CHÍNH CHIA THEO TRẠNG THÁI (ĐÃ FIX PHÁ VỠ THẺ) -->
+            {% if trang_thai_dau_tu == 'DANG_DAU_TU' or trang_thai_dau_tu == 'CHO_DOI_GIAI_NGAN' or trang_thai_dau_tu == 'DA_GIAI_NGAN' %}
+                <div class="premium-card">
+                    <div style="color: #64748b; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
+                         Tổng Tài Sản Đầu Tư Hiện Tại (Gốc + Lãi Real-time)
+                    </div>
+                    <div id="realtime-asset" style="font-size: 54px; font-weight: 900; color: #10b981; font-family: monospace; letter-spacing: -1px;">
+                        0 đ
+                    </div>
+                    <div style="font-size: 18px; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.08); padding: 6px 14px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.15);">
+            <i class="fa-solid fa-arrow-trend-up"></i> Lãi tích lũy: +<span id="realtime-profit" style="font-family: monospace; font-weight: 800;">0</span> đ
+        </div>
+                    
+                    <div style="height: 1px; background: rgba(255,255,255,0.06); margin: 30px 0;"></div>
+                    
+                    <div class="info-grid">
+                        <div class="info-mini-card">
+                            <div style="color: #475569; font-size: 12px; font-weight: 700; margin-bottom: 6px;">💰 Vốn gốc giải ngân từ cuộc vote:</div>
+                            <div style="font-size: 20px; font-weight: 800; color: #fff;"><span id="hien-thi-goc">0</span> <span style="font-size: 14px; color: #64748b;">đ</span></div>
+                        </div>
+                        <div class="info-mini-card">
+                            <div style="color: #475569; font-size: 12px; font-weight: 700; margin-bottom: 6px;">🏷️ Lãi suất tích lũy kỳ hạn:</div>
+                            <div style="font-size: 20px; font-weight: 800; color: #f59e0b;">{{ lai_suat_nam }}% <span style="font-size: 14px; color: #64748b;">/ năm</span></div>
+                        </div>
+
+                        <div class="info-mini-card" style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #475569; font-size: 11px; font-weight: 700; margin-bottom: 2px;">📅 Ngày kích hoạt: <span style="color: #fff; font-family: monospace;">{{ ngay_bat_dau_str }}</span></div>
+                                <div style="color: #475569; font-size: 11px; font-weight: 700; margin-bottom: 2px;">🏁 Ngày đáo hạn: <span style="color: #fb7185; font-family: monospace;">{{ ngay_ket_thuc_str }}</span></div>
+                                <div style="color: #475569; font-size: 11px; font-weight: 700;">💰 Ngày giải ngân về ví web: <span style="color: #3b82f6; font-family: monospace;">{{ ngay_giai_ngan_str }}</span></div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #475569; font-size: 12px; font-weight: 700; margin-bottom: 4px;">⚡ Trạng thái:</div>
+                                {% if trang_thai_dau_tu == 'DA_GIAI_NGAN' %}
+                                    <div style="font-size: 11px; font-weight: 800; color: #10b981;">ĐÃ HOÀN TẤT CHI TRẢ</div>
+                                {% elif trang_thai_dau_tu == 'CHO_DOI_GIAI_NGAN' %}
+                                    <div style="font-size: 11px; font-weight: 800; color: #3b82f6;">CHỐT LÃI - ĐANG ĐỐI SOÁT</div>
+                                {% else %}
+                                    <div style="font-size: 11px; font-weight: 800; color: #eab308;">ĐANG TÍCH LŨY</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="premium-card" style="padding: 50px; border-color: rgba(245, 158, 11, 0.2);">
+                    <div style="display: flex; gap: 40px; align-items: center;">
+                        <div style="flex: 1;">
+                            <span style="color: #f59e0b; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">Dự án biểu quyết số dư</span>
+                            <h2 style="font-size: 26px; font-weight: 900; margin: 10px 0; color: #fff;">📌 Đề xuất: "{{ ten_goi }}"</h2>
+                            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
+                                Số vốn đề xuất trích quỹ: <strong style="color: #fff;">{{ so_tien_goc_uoc_tinh }} đ</strong> mang đi gửi tiết kiệm ngân hàng sinh lãi dài hạn. Cần tối thiểu <strong style="color: #a855f7;">75% thành viên lớp đồng ý</strong> để khởi chạy.
+                            </p>
+
+                            <div style="margin-bottom: 30px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; margin-bottom: 10px;">
+                                    <span style="color: #64748b;"><i class="fa-solid fa-user-check"></i> Đạt: {{ so_luong_dong_y }}/{{ tong_so_tv_lop }} phiếu</span>
+                                    <span style="color: #f59e0b;">{{ ty_le_dong_y }}% / Mốc mục tiêu 75%</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
+                                    <div style="width: {{ ty_le_dong_y }}%; height: 100%; background: linear-gradient(90deg, #f59e0b, #a855f7); border-radius: 6px; transition: width 0.5s ease;"></div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 25px; border-radius: 24px;">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 800; color: #fff;"><i class="fa-solid fa-square-poll-horizontal" style="color: #6366f1; margin-right: 8px;"></i>Ý kiến của sếp:</h4>
+                                
+                                {% if cuoc_vote %}
+                                    {% if da_vote_roi %}
+                                        <div style="padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 20px; text-align: center; color: #10b981; font-weight: 900;">
+                                            <i class="fa-solid fa-check-circle"></i> Sếp đã biểu quyết cho dự án này!
+                                        </div>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'theo_doi_dau_tu' %}" style="display: flex; gap: 15px;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="proposal_id" value="{{ cuoc_vote.id }}">
+                                            <button type="submit" name="choice" value="Đồng ý" class="btn-vote" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                                                <i class="fa-solid fa-thumbs-up"></i> Đồng ý thông qua
+                                            </button>
+                                            <button type="submit" name="choice" value="Không đồng ý" class="btn-vote" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+                                                <i class="fa-solid fa-thumbs-down"></i> Không đồng ý
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <p style="color: #94a3b8; font-style: italic;"><i class="fa-solid fa-circle-info"></i> Hiện tại chưa có cuộc biểu quyết nào mở cho lớp của sếp.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div style="width: 200px; height: 200px; background: rgba(255,255,255,0.01); border-radius: 40px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px;">
+                            <i class="fa-solid fa-shield-halved" style="font-size: 60px; color: rgba(245, 158, 11, 0.4);"></i>
+                            <span style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase;">Dòng tiền đang khóa</span>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- NHẬT KÝ BIỂU QUYẾT LỚP REAL-TIME -->
+            <div class="premium-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #E8D8C4;"><i class="fa-solid fa-users-viewfinder" style="color: #6366f1; margin-right: 10px;"></i>Nhật Ký Biểu Quyết Lớp Real-time</h3>
+                        <p style="color: #64748b; font-size: 12px; margin-top: 5px;">Minh bạch danh sách các thành viên đã nhấn bỏ phiếu hệ thống.</p>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: #64748b;">
+                                <th style="padding: 12px 16px; font-weight: 700;">Thành viên</th>
+                                <th style="padding: 12px 16px; font-weight: 700;">Lựa chọn bầu</th>
+                                <th style="padding: 12px 16px; font-weight: 700;">Thời gian điểm danh vote</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vote in danh_sach_vote %}
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding: 16px; font-weight: 600; color: #e2e8f0;">
+                                        {{ vote.thanh_vien.ho_ten }} 
+                                        <span style="font-size: 11px; color: #64748b; font-weight: 500; margin-left: 5px;">({{ vote.thanh_vien.mssv }})</span>
+                                    </td>
+                                    
+                                    <td style="padding: 16px;">
+                                        {% if "Đồng ý" in vote.phuong_an.noi_dung %}
+                                            <span style="padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); display: inline-block;">
+                                                <i class="fa-solid fa-circle-check"></i> {{ vote.phuong_an.noi_dung }}
+                                            </span>
+                                        {% else %}
+                                            <span style="padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15); display: inline-block;">
+                                                <i class="fa-solid fa-circle-xmark"></i> {{ vote.phuong_an.noi_dung }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td style="padding: 16px; color: #94a3b8; font-family: monospace;">
+                                        {{ vote.created_at|date:"d/m/Y H:i:s" }}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" style="padding: 30px; text-align: center; color: #64748b; font-style: italic;">
+                                        <i class="fa-solid fa-inbox"></i> Chưa có thành viên nào bỏ phiếu cho dự án này.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀM TÍNH TOÁN LÃI REAL-TIME -->
+   <script>
+        // 🔥 SỬA CHỖ NÀY: Dùng bộ lọc |stringformat:"d" hoặc ép chuỗi bỏ ký tự lạ để tránh lỗi parseFloat khi dính dấu phân cách
+        let rawGoc = "{{ so_tien_goc }}".replace(/[^0-9.]/g, '');
+        const tienGoc = parseFloat(rawGoc) || 0; 
+        
+        const laiNam = parseFloat("{{ lai_suat_nam }}") / 100; 
+        const ngayBatDau = new Date("{{ ngay_bat_dau_iso }}").getTime(); 
+        const ngayKetThuc = new Date("{{ ngay_ket_thuc_iso }}").getTime();
+        const trangThai = "{{ trang_thai_dau_tu }}";
+
+        const hienThiGocElement = document.getElementById("hien-thi-goc");
+        if (hienThiGocElement) {
+            hienThiGocElement.innerText = tienGoc.toLocaleString('vi-VN');
+        }
+        
+        // Tính toán số tiền lãi phát sinh trên mỗi mili-giây
+        const laiMiliGiay = (tienGoc * laiNam) / (365 * 24 * 60 * 60 * 1000);
+
+        function updateRealtimeProfit() {
+            const realtimeAssetElement = document.getElementById("realtime-asset");
+            const realtimeProfitElement = document.getElementById("realtime-profit");
+            if (!realtimeAssetElement) return;
+
+            const bayGio = new Date().getTime();
+            
+            if (tienGoc > 0) {
+                let thoiGianTinhLai = bayGio - ngayBatDau;
+                
+                // Nếu dự án đã vượt mốc ngày kết thúc, đóng băng dòng thời gian chạy lãi
+                if (bayGio >= ngayKetThuc) {
+                    thoiGianTinhLai = ngayKetThuc - ngayBatDau;
+                }
+                
+                if (thoiGianTinhLai > 0) {
+                    const tongTienLai = thoiGianTinhLai * laiMiliGiay;
+                    const tongTaiSan = tienGoc + tongTienLai;
+                    
+                    // 1. Cập nhật tổng tài sản lớn (Gốc + Lãi)
+                    realtimeAssetElement.innerText = tongTaiSan.toLocaleString('vi-VN', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 5 
+                    }) + " đ";
+
+                    // 2. Cập nhật riêng ô nhỏ hiển thị số tiền lãi nhảy liên tục
+                    if (realtimeProfitElement) {
+                        realtimeProfitElement.innerText = tongTienLai.toLocaleString('vi-VN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 5
+                        });
+                    }
+                } else {
+                    realtimeAssetElement.innerText = tienGoc.toLocaleString('vi-VN') + " đ";
+                    if (realtimeProfitElement) realtimeProfitElement.innerText = "0,00";
+                }
+            }
+        }
+
+        if (tienGoc > 0) {
+            // Chạy interval cập nhật liên tục nếu dự án đang trong chu kỳ tích lũy lãi
+            if (trangThai === "DANG_DAU_TU") {
+                setInterval(updateRealtimeProfit, 100);
+            }
+            updateRealtimeProfit(); // Chạy cấu hình lần đầu để chốt số lập tức
+        }
+    </script>
+</body>
+</html>

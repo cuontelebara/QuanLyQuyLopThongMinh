@@ -8,11 +8,13 @@ from django.shortcuts import render, redirect
 from django.db.models import Sum
 import pandas as pd
 from unfold.decorators import action, display
+from .models import BieuQuyet, ThanhVien, ChiTietBinhChon
 from .models import ClassFund, CollectionPeriod, Transaction, InvestmentProposal, ProposalVote
-
+from decimal import Decimal
+from .models import ThongBaoBuuTa, GiaoDich
 from import_export.admin import ImportExportModelAdmin
 from unfold.admin import ModelAdmin, TabularInline # Thêm TabularInline của Unfold cho đẹp
-
+from .models import KhoTaiNguyen
 # ==========================================
 # THÊM PhuongAnBieuQuyet VÀO ĐÂY NÈ SẾP
 # ==========================================
@@ -20,7 +22,8 @@ from .models import (
     User, LopHoc, ThanhVien, LoaiQuy, DotThu, TaiSan, GiaoDich, 
     TienDoDongQuy, DanhMucThuChi, MucTieuQuy, SuKienNhacViec,
     PhieuDeXuatChi, KhieuNai, QuaTang, NhiemVu, LichSuWebhook, 
-    BieuQuyet, PhuongAnBieuQuyet, HuyHieu, HuyHieuThanhVien
+    BieuQuyet, PhuongAnBieuQuyet, HuyHieu, HuyHieuThanhVien,
+    KhoTaiNguyen
 )
 
 admin.site.site_header = "HỆ THỐNG TÀI CHÍNH FUNDSMART PRO"
@@ -66,8 +69,13 @@ class CustomUserAdmin(ModelAdmin, ImportExportModelAdmin):
 # ==========================================
 @admin.register(LoaiQuy)
 class LoaiQuyAdmin(ModelAdmin):
-    list_display = ('ten_quy', 'display_balance', 'is_khoa_so', 'dieu_chuyen_nhanh')
+    # Hiển thị thêm cột Trạng thái vòng đời để theo dõi quỹ nào Đang hoạt động / Đã giải tán
+    list_display = ('ten_quy', 'display_balance', 'is_khoa_so', 'trang_thai_vong_doi', 'dieu_chuyen_nhanh')
     list_editable = ('is_khoa_so',)
+    list_filter = ('trang_thai_vong_doi', 'is_khoa_so')
+
+    # 🌟 ĐĂNG KÝ HÀNH ĐỘNG GIẢI TÁN QUỸ VÀO ADMIN ACTION
+    actions = ['giai_tan_quy_va_chia_tien_ve_vi']
 
     @display(description="Số dư hiện tại")
     def display_balance(self, obj):
@@ -79,6 +87,78 @@ class LoaiQuyAdmin(ModelAdmin):
         url = reverse('admin:quanlyquy_giaodich_add') + f"?loai=NB&loai_quy={obj.id}"
         return format_html('<a href="{}" style="background:#6366f1; color:white; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700;">{}</a>', url, 'ĐIỀU CHUYỂN')
 
+    # 💥 LOGIC TỰ ĐỘNG CHIA TIỀN KHI BẤM GIẢI TÁN
+    @admin.action(description='💥 Giải tán quỹ đã chọn & Tất toán tiền chia đều về ví Web cho lớp')
+    def giai_tan_quy_va_chia_tien_ve_vi(self, request, queryset):
+        # Import an toàn ngay trong hàm để tránh triệt để lỗi vòng lặp import (Circular Import)
+        from decimal import Decimal
+        from django.db import transaction
+        from .models import GiaoDich, ThongBaoBuuTa, ThanhVien
+
+        for quy in queryset:
+            # 1. Chặn nếu quỹ này đã bấm giải tán từ trước
+            if quy.trang_thai_vong_doi == 'DISBANDED':
+                self.message_user(request, f"Quỹ '{quy.ten_quy}' đã được giải tán từ trước rồi sếp ơi!", messages.WARNING)
+                continue
+                
+            lop_target = quy.lop_hoc
+            if not lop_target:
+                self.message_user(request, f"Quỹ '{quy.ten_quy}' chưa được cấu hình thuộc lớp nào nên hệ thống không biết chia tiền cho ai!", messages.ERROR)
+                continue
+
+            # 2. Quét toàn bộ thành viên đang hoạt động thực tế của lớp đó
+            danh_sach_tv = ThanhVien.objects.filter(lop_hoc=lop_target, deleted_at__isnull=True)
+            tong_so_tv = danh_sach_tv.count()
+
+            if tong_so_tv == 0:
+                self.message_user(request, f"Lớp '{lop_target.ten_lop}' hiện đang trống, không có thành viên để nhận tiền tất toán!", messages.WARNING)
+                continue
+
+            # 3. Đọc số dư hiện tại của quỹ bằng property thông minh sếp đã viết
+            so_du_quy = quy.so_du_hien_tai
+
+            # 4. Tiến hành giải ngân chia đều nếu quỹ vẫn còn lúa
+            if so_du_quy > 0:
+                # Sử dụng transaction.atomic để bọc khối lệnh, đảm bảo tất cả đều được cộng tiền hoặc không ai bị lỗi mất tiền
+                with transaction.atomic():
+                    # Chia đều số dư quỹ cho tổng sếp trong lớp (Dùng chuẩn tài chính Decimal)
+                    so_tien_moi_nguoi = Decimal(str(round(float(so_du_quy) / tong_so_tv, 2)))
+
+                    for member in danh_sach_tv:
+                        # Cộng tiền thẳng vào số dư Ví Web của sinh viên
+                        member.so_du_vi_web = (member.so_du_vi_web or Decimal('0')) + so_tien_moi_nguoi
+                        member.save()
+
+                        # Tạo giao dịch Hoàn ứng (HU) đã xác nhận để lưu vết đối soát kế toán kép
+                        GiaoDich.objects.create(
+                            loai='HU',  
+                            so_tien=so_tien_moi_nguoi,
+                            loai_quy=quy,
+                            thanh_vien=member,
+                            ly_do=f"[TẤT TOÁN QUỸ LỚP] Nhận lại tiền từ quỹ '{quy.ten_quy}' bị giải tán",
+                            phuong_thuc='CASH',
+                            da_xac_nhan=True
+                        )
+
+                        # Phát thư thông báo tự động thông qua Bưu tá hệ thống
+                        if member.user:
+                            ThongBaoBuuTa.objects.create(
+                                nguoi_nhan=member.user,
+                                tieu_de="📢 Tất toán giải tán quỹ lớp!",
+                                noi_dung=f"Quỹ '{quy.ten_quy}' đã giải tán. Số dư quỹ được tất toán, sếp nhận được {int(so_tien_moi_nguoi):,}đ vào Ví Web.",
+                                loai='FINANCE'
+                            )
+
+            # 5. Cập nhật trạng thái đóng băng quỹ vĩnh viễn và Khóa sổ
+            quy.trang_thai_vong_doi = 'DISBANDED'
+            quy.is_khoa_so = True
+            quy.save()
+            
+            self.message_user(
+                request, 
+                format_html("🎉 Đã giải tán quỹ '<b>{}</b>'! Tất toán thành công <b>{:,}đ</b> chia đều cho <b>{}</b> sếp thuộc lớp <b>{}</b>.", quy.ten_quy, int(so_du_quy), tong_so_tv, lop_target.ten_lop), 
+                messages.SUCCESS
+            )
 @admin.register(DanhMucThuChi)
 class DanhMucAdmin(ModelAdmin):
     list_display = ('ten_danh_muc', 'loai', 'mo_ta')
@@ -191,9 +271,99 @@ class PhuongAnInline(TabularInline):
     
 @admin.register(BieuQuyet)
 class BieuQuyetAdmin(ModelAdmin): 
-    list_display = ('cau_hoi', 'dang_mo', 'han_chot')
-    inlines = [PhuongAnInline] # Gắn cái bảng nhập Phương án vào dưới đít bảng Câu hỏi
-    list_editable = ('dang_mo',) # Cho phép bật/tắt bình chọn nhanh ở ngoài danh sách
+    list_display = ('cau_hoi', 'dang_mo', 'trang_thai_duyet', 'han_chot')
+    inlines = [PhuongAnInline] 
+    list_editable = ('dang_mo',) 
+
+    # Đăng ký nút bấm hành động trong trang danh sách Khảo sát / Vote
+    actions = ['tat_toan_va_giai_ngan_dau_tu_ngay']
+
+    # 🚀 LOGIC TỰ ĐỘNG CHIA TIỀN (CẢ GỐC + CẢ LÃI) VỀ VÍ WEB
+    @admin.action(description='⚡ Tất toán dự án đầu tư này & Giải ngân (CẢ GỐC + LÃI) về ví Web')
+    def tat_toan_va_giai_ngan_dau_tu_ngay(self, request, queryset):
+        from decimal import Decimal
+        from django.db import transaction
+        from django.utils import timezone
+        from .models import ThanhVien, ThongBaoBuuTa, GiaoDich
+
+        for cuoc_vote in queryset:
+            # 1. Chặn nếu cuộc vote này không ở trạng thái APPROVED (Đang đầu tư chạy lãi)
+            if cuoc_vote.trang_thai_duyet != 'APPROVED':
+                self.message_user(request, f"Dự án '{cuoc_vote.cau_hoi}' không ở trạng thái đang đầu tư (APPROVED) để tất toán!", messages.WARNING)
+                continue
+                
+            lop_target = cuoc_vote.lop_hoc
+            danh_sach_tv = ThanhVien.objects.filter(lop_hoc=lop_target, deleted_at__isnull=True) if lop_target else []
+            tong_so_tv = danh_sach_tv.count()
+            
+            if tong_so_tv == 0:
+                self.message_user(request, f"Lớp của dự án này không có thành viên nào để nhận tiền tất toán!", messages.WARNING)
+                continue
+                
+            with transaction.atomic():
+                # 2. LẤY SỐ TIỀN VỐN GỐC THỰC TẾ (Ví dụ: 100.000đ từ database)
+                so_tien_goc = float(cuoc_vote.so_tien_dau_tu)
+                lai_suat_nam = 4.8
+                ngay_bat_dau = cuoc_vote.updated_at or timezone.now()
+                
+                # 3. TÍNH TOÀN BỘ SỐ TIỀN LÃI REAL-TIME ĐẾN THỜI ĐIỂM BẤM NÚT
+                thoi_gian_dau_tu_ms = (timezone.now() - ngay_bat_dau).total_seconds() * 1000
+                lai_mili_giay = (so_tien_goc * (lai_suat_nam / 100)) / (365 * 24 * 60 * 60 * 1000)
+                tong_lai_thuc_te = max(0, thoi_gian_dau_tu_ms * lai_mili_giay)
+                
+                # 🔥 TỔNG SỐ TIỀN PHẢI CHIA = TIỀN GỐC + TIỀN LÃI
+                tong_so_tien_tat_toan = so_tien_goc + tong_lai_thuc_te
+                
+                # Chia đều tổng (Gốc + Lãi) cho cả lớp
+                so_tien_chia_deu = Decimal(str(round(tong_so_tien_tat_toan / tong_so_tv, 2)))
+                
+                # 4. GIẢI NGÂN ĐỒNG LOẠT VÀO VÍ WEB CHO TỪNG THÀNH VIÊN
+                for member in danh_sach_tv:
+                    # Cộng đầy đủ cả gốc lẫn lãi vào số dư ví Web
+                    member.so_du_vi_web = (member.so_du_vi_web or Decimal('0')) + so_tien_chia_deu
+                    member.save()
+                    
+                    # Ghi nhận sổ giao dịch Hoàn ứng (HU) khớp với số tiền thực tế nhận được
+                    if cuoc_vote.loai_quy:
+                        GiaoDich.objects.create(
+                            loai='HU',
+                            so_tien=so_tien_chia_deu,
+                            loai_quy=cuoc_vote.loai_quy,
+                            thanh_vien=member,
+                            ly_do=f"[TẤT TOÁN VOTE] Nhận tiền (Gốc + Lãi) dự án '{cuoc_vote.cau_hoi}' kết thúc sớm",
+                            phuong_thuc='CASH',
+                            da_xac_nhan=True
+                        )
+                    
+                    # Bắn thư thông báo bưu tá báo tin vui tiền về ví
+                    if member.user:
+                        ThongBaoBuuTa.objects.create(
+                            nguoi_nhan=member.user,
+                            tieu_de="💰 Dự án đầu tư biểu quyết đã tất toán hoàn tất!",
+                            noi_dung=f"Dự án '{cuoc_vote.cau_hoi}' đã được tất toán sớm. Sếp đã nhận lại {int(so_tien_chia_deu):,}đ (Bao gồm cả Gốc + Lãi thực tế) vào Ví Web.",
+                            loai='FINANCE'
+                        )
+                
+                # 5. Đổi trạng thái cuộc vote sang CONCLUDED để khóa dự án và đóng băng số lãi trên giao diện HTML
+                cuoc_vote.trang_thai_duyet = 'CONCLUDED'
+                cuoc_vote.save()
+                
+                self.message_user(
+                    request, 
+                    f"🎉 Tất toán thành công dự án '{cuoc_vote.cau_hoi}'! Tổng số tiền giải ngân thực tế (Gốc: {int(so_tien_goc):,}đ + Lãi: {round(tong_lai_thuc_te, 2)}đ) là {int(tong_so_tien_tat_toan):,}đ đã được chia đều về ví Web cho {tong_so_tv} thành viên lớp.", 
+                    messages.SUCCESS
+                )
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.nguoi_tao = request.user 
+            from .models import ThanhVien, ClassFund
+            thanh_vien = ThanhVien.objects.filter(user=request.user).first()
+            if thanh_vien and thanh_vien.lop_hoc:
+                quy_cua_lop = LoaiQuy.objects.filter(lop_hoc=thanh_vien.lop_hoc).first()
+                if quy_cua_lop:
+                    obj.loai_quy = quy_cua_lop
+        super().save_model(request, obj, form, change)  
 
 @admin.register(HuyHieu)
 class HuyHieuAdmin(ModelAdmin): 
@@ -232,7 +402,37 @@ class InvestmentProposalAdmin(admin.ModelAdmin):
     list_filter = ('status', 'fund')
 
 # 5. Đăng ký Chi tiết Phiếu bầu
-@admin.register(ProposalVote)
-class ProposalVoteAdmin(admin.ModelAdmin):
-    list_display = ('proposal', 'user', 'choice', 'voted_at')
-    list_filter = ('choice', 'proposal__fund')
+@admin.register(ChiTietBinhChon)
+class ChiTietBinhChonAdmin(admin.ModelAdmin):
+    # 🌟 GỌI CỘT ẢO 'get_phuong_an' ĐỂ NÉ LỖI HỆ THỐNG
+    list_display = ('id', 'get_username', 'get_lop', 'bieu_quyet', 'get_phuong_an', 'created_at')
+    
+    # Tạm thời bỏ lọc theo phương án để không bị bắt lỗi Field
+    list_filter = ('bieu_quyet', 'thanh_vien__lop_hoc')
+    search_fields = ('thanh_vien__user__username', 'bieu_quyet__cau_hoi')
+
+    # 🌟 HÀM ẢO 1: Lấy nội dung phương án hiển thị lên bảng admin công tâm
+    def get_phuong_an(self, obj):
+        # Thử lấy theo các tên biến có thể có, nếu không được thì trả về ID trực tiếp
+        if hasattr(obj, 'phuong_an_chon') and obj.phuong_an_chon:
+            return obj.phuong_an_chon.noi_dung
+        elif hasattr(obj, 'phuong_an') and obj.phuong_an:
+            return obj.phuong_an.noi_dung
+        elif hasattr(obj, 'phuong_an_id'):
+            return f"Phương án ID: {obj.phuong_an_id}"
+        return "N/A"
+    get_phuong_an.short_description = 'Phương án chọn'
+
+    def get_username(self, obj):
+        return obj.thanh_vien.user.username if obj.thanh_vien and obj.thanh_vien.user else "N/A"
+    get_username.short_description = 'Tài khoản sinh viên'
+
+    def get_lop(self, obj):
+        return obj.thanh_vien.lop_hoc.ten_lop if obj.thanh_vien and obj.thanh_vien.lop_hoc else "Không có lớp"
+    get_lop.short_description = 'Thuộc Lớp'
+@admin.register(KhoTaiNguyen)
+class KhoTaiNguyenAdmin(ModelAdmin):
+    list_display = ('ten_tai_nguyen', 'loai', 'tai_khoan', 'is_active')
+    list_editable = ('is_active',)
+    list_filter = ('loai', 'is_active')
+    search_fields = ('ten_tai_nguyen', 'tai_khoan')

@@ -1,3 +1,4 @@
+from random import random
 from django.db import models
 from django.utils import timezone
 from django.db.models import Sum
@@ -7,9 +8,96 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
+from django.apps import apps
+
 # ==========================================
 # LÕI HỆ THỐNG: QUẢN LÝ DẤU VẾT & XÓA MỀM
 # ==========================================
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('login_redirect')
+        
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        remember_me = request.POST.get('remember_me')
+        recaptcha_response = request.POST.get('g-recaptcha-response')
+        
+        if not recaptcha_response:
+            messages.error(request, 'Vui lòng xác thực "Tôi không phải là người máy"!')
+            return render(request, 'quanlyquy/login.html', {'username': username})
+            
+        data = {'secret': settings.RECAPTCHA_PRIVATE_KEY, 'response': recaptcha_response}
+        try:
+            r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data, timeout=5)
+            if not r.json().get('success'):
+                messages.error(request, 'Xác thực Captcha thất bại!')
+                return render(request, 'quanlyquy/login.html', {'username': username})
+        except:
+            messages.error(request, 'Lỗi kết nối xác thực reCAPTCHA!')
+            return render(request, 'quanlyquy/login.html', {'username': username})
+            
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            request.session.set_expiry(1209600 if remember_me else 0)
+            messages.success(request, f'Chào mừng {user.full_name or user.username} quay trở lại!')
+            return redirect('login_redirect')
+        else:
+            messages.error(request, 'Tài khoản không tồn tại hoặc sai mật khẩu!')
+            
+    return render(request, 'quanlyquy/login.html')
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        full_name = request.POST.get('full_name', '').strip()
+        mssv = request.POST.get('mssv', '').strip()
+        
+        context = {'username': username, 'email': email, 'full_name': full_name, 'mssv': mssv}
+        
+        if password != confirm_password:
+            messages.error(request, "Mật khẩu xác nhận không khớp!")
+            return render(request, 'quanlyquy/register.html', context)
+            
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Tên đăng nhập này đã tồn tại!")
+            return render(request, 'quanlyquy/register.html', context)
+            
+        if mssv and ThanhVien.objects.filter(mssv=mssv).exists():
+            messages.error(request, "Mã sinh viên này đã được đăng ký tài khoản!")
+            return render(request, 'quanlyquy/register.html', context)
+            
+        try:
+            # 1. Tạo User tài khoản hệ thống
+            user = User.objects.create_user(username=username, email=email, password=password)
+            user.full_name = full_name
+            user.mssv = mssv
+            user.role = 'MEMBER'   
+            user.is_staff = False  
+            user.save()
+            
+            # 2. Tạo song song hồ sơ Thành Viên lớp
+            ThanhVien.objects.create(
+                user=user,
+                ho_ten=full_name,
+                mssv=mssv,
+                email=email
+            )
+            
+            messages.success(request, "Tạo tài khoản thành công! Vui lòng đăng nhập.")
+            return redirect('login')
+        except Exception as e:
+            messages.error(request, f"Lỗi tạo tài khoản: {str(e)}")
+            return render(request, 'quanlyquy/register.html', context)
+            
+    return render(request, 'quanlyquy/register.html')
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
@@ -83,12 +171,18 @@ class ThanhVien(BaseModel):
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
     vi_xu = models.IntegerField(default=0, verbose_name="Số dư Xu (Chi tiêu)")
     tong_xu_tich_luy = models.IntegerField(default=0, verbose_name="Tổng Xu từng kiếm (Đua TOP)")
+    so_du = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Số dư tài khoản")
+    
+    so_du_tai_khoan = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Số dư tài khoản riêng")
+    so_du_vi_web = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Số dư tài khoản Web (VNĐ)")
+    
 
     class Meta:
         verbose_name = "Thành Viên"
         verbose_name_plural = "Hồ Sơ Sinh Viên"
 
-    def __str__(self): return f"{self.mssv} - {self.ho_ten}"
+    def __str__(self):
+        return self.user.username
 
 class LoaiQuy(BaseModel):
     ten_quy = models.CharField(max_length=100, verbose_name="Tên quỹ")
@@ -136,6 +230,8 @@ class TienDoDongQuy(BaseModel):
     so_tien_da_nop = models.DecimalField(max_digits=12, decimal_places=0, default=0)
     duoc_mien_giam = models.BooleanField(default=False)
     trang_thai = models.CharField(max_length=20, choices=[('CHUA_NOP', 'Chưa nộp'), ('THIEU', 'Nộp thiếu'), ('DU', 'Đã đủ')], default='CHUA_NOP')
+    ngay_nhac_nho_gan_nhat = models.DateTimeField(null=True, blank=True, verbose_name="Ngày hệ thống nhắc nợ")
+    da_tu_dong_khau_tru = models.BooleanField(default=False, verbose_name="Đã tự động trích tiền")
 
 class TaiSan(BaseModel):
     ten_tai_san = models.CharField(max_length=200, verbose_name="Tên tài sản")
@@ -339,12 +435,33 @@ class LichSuGiaoDichXu(BaseModel):
 
 class BieuQuyet(BaseModel):
     cau_hoi = models.CharField(max_length=255, verbose_name="Câu hỏi biểu quyết")
+    lop_hoc = models.ForeignKey('LopHoc', on_delete=models.CASCADE, verbose_name="Dành cho lớp", null=True, blank=True)
     han_chot = models.DateTimeField(verbose_name="Hạn chót vote")
     dang_mo = models.BooleanField(default=True, verbose_name="Đang diễn ra")
     so_tien_dau_tu = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="Số tiền đề xuất đầu tư")
     loai_quy = models.ForeignKey('LoaiQuy', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Quỹ sử dụng đầu tư")
     trang_thai_duyet = models.CharField(max_length=20, choices=[('PENDING', 'Chờ gom phiếu'), ('APPROVED', 'Đã thông qua'), ('REJECTED', 'Bị từ chối')], default='PENDING', verbose_name="Trạng thái phê duyệt")
+    ngay_ket_thuc_dau_tu = models.DateTimeField(null=True, blank=True, verbose_name="Ngày gói đầu tư đáo hạn")
     class Meta: verbose_name = "Khảo Sát"; verbose_name_plural = "Bầu Cử / Khảo Sát"
+    def check_investment_status(self):
+        # Lấy tổng số thành viên lớp (sếp có thể thay bằng count của bảng ThanhVien)
+        total_users = ThanhVien.objects.filter(lop_hoc=self.loai_quy.lop_hoc).count()
+        # Đếm số phiếu ĐỒNG Ý
+        votes = ChiTietBinhChon.objects.filter(
+            bieu_quyet=self, 
+            phuong_an__noi_dung__icontains="Đồng ý"
+        ).count()
+        
+        # Tính %
+        percent = (votes / total_users) * 100 if total_users > 0 else 0
+        
+        # Nếu đạt 75% -> Duyệt tự động
+        if percent >= 75 and self.trang_thai_duyet == 'PENDING':
+            self.trang_thai_duyet = 'APPROVED'
+            self.save()
+            # Ở đây sếp có thể cộng tiền vào gói đầu tư
+        return percent
+
 
 class PhuongAnBieuQuyet(BaseModel):
     # Liên kết với bảng BieuQuyet ở trên. Dùng related_name='cac_phuong_an' để móc dữ liệu ra HTML cho dễ
@@ -420,7 +537,7 @@ class ThongBaoBuuTa(BaseModel):
 @receiver(post_save, sender=GiaoDich)
 def tu_dong_cap_nhat_tien_do(sender, instance, created, **kwargs):
     # Chỉ chạy khi giao dịch nộp tiền (THU) và ĐÃ XÁC NHẬN
-    if instance.loai == 'THU' and instance.da_xac_nhan and instance.dot_thu and instance.thanh_vien:
+    if instance.loai == 'THU' and instance.da_xac_nhan and instance.dot_thu:
         from .models import TienDoDongQuy
         tiendo, _ = TienDoDongQuy.objects.get_or_create(
             dot_thu=instance.dot_thu,
@@ -440,21 +557,23 @@ def tu_dong_cap_nhat_tien_do(sender, instance, created, **kwargs):
         tiendo.save()
 @receiver(post_save, sender=GiaoDich)
 def tu_dong_cap_nhat_tien_do(sender, instance, created, **kwargs):
-    # Chỉ xử lý khi là giao dịch THU, có đợt thu và đã được XÁC NHẬN (da_xac_nhan=True)
-    if instance.loai == 'THU' and instance.da_xac_nhan and instance.dot_thu and instance.thanh_vien:
+   
+    if instance.loai == 'THU' and instance.da_xac_nhan == True and instance.dot_thu:
+        
         from .models import TienDoDongQuy
         tiendo, _ = TienDoDongQuy.objects.get_or_create(
             dot_thu=instance.dot_thu,
             thanh_vien=instance.thanh_vien,
-            defaults={'so_tien_can_nop': instance.dot_thu.so_tien_moi_nguoi}
+            defaults={'so_tien_can_nop': instance.dot_thu.so_tien_moi_nguoi, 'so_tien_da_nop': 0}
         )
-        # Tính lại tổng tiền đã nộp dựa trên các giao dịch ĐÃ XÁC NHẬN
+        
+        # Chỉ lấy tổng tiền từ những giao dịch ĐÃ XÁC NHẬN (da_xac_nhan=True)
         tong_da_nop = GiaoDich.objects.filter(
-            thanh_vien=instance.thanh_vien,
-            dot_thu=instance.dot_thu,
-            da_xac_nhan=True,
+            thanh_vien=instance.thanh_vien, 
+            dot_thu=instance.dot_thu, 
+            da_xac_nhan=True, 
             loai='THU'
-        ).aggregate(Sum('so_tien'))['so_tien__sum'] or 0
+        ).aggregate(models.Sum('so_tien'))['so_tien__sum'] or 0
         
         tiendo.so_tien_da_nop = tong_da_nop
         tiendo.trang_thai = 'DU' if tong_da_nop >= tiendo.so_tien_can_nop else 'THIEU'
@@ -514,3 +633,108 @@ class ProposalVote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.proposal.title} - {self.choice}"
+class GoiDauTu(BaseModel):
+    ten_khoan_dau_tu = models.CharField(max_length=255, verbose_name="Tên ngân hàng / Gói đầu tư")
+    so_tien_goc = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Số vốn đầu tư")
+    lai_suat_nam = models.FloatField(verbose_name="Lãi suất % / Năm")
+    ngay_bat_dau = models.DateTimeField(verbose_name="Ngày xuống tiền đầu tư")
+    
+    class Meta:
+        verbose_name = "Khoản Đầu Tư"
+        verbose_name_plural = "Theo Dõi Đầu Tư Gốc"
+@receiver(post_save, sender=DotThu)
+def khoi_tao_tien_do_va_thong_bao(sender, instance, created, **kwargs):
+    """
+    HÀM KÍCH HOẠT TỰ ĐỘNG: Ngay khi Admin tạo 1 Đợt Thu mới, 
+    nó sẽ chia nợ cho cả lớp và bắn thông báo bưu tá.
+    """
+    if created: # Chỉ chạy khi Đợt thu mới được TẠO RA
+        # Lấy class ở local để tránh lỗi chưa import kịp
+        from .models import ThanhVien, TienDoDongQuy, ThongBaoBuuTa
+        
+        # 1. Tìm tất cả sinh viên thuộc lớp của cái Quỹ đó
+        lop_cua_quy = instance.loai_quy.lop_hoc
+        if lop_cua_quy:
+            danh_sach_tv = ThanhVien.objects.filter(lop_hoc=lop_cua_quy, deleted_at__isnull=True)
+        else:
+            danh_sach_tv = ThanhVien.objects.filter(deleted_at__isnull=True)
+            
+        tao_tien_do = []
+        tao_thong_bao = []
+        
+        for tv in danh_sach_tv:
+            # 2. Ghi nợ (Tạo Tiến độ) cho từng thành viên
+            tao_tien_do.append(
+                TienDoDongQuy(
+                    dot_thu=instance,
+                    thanh_vien=tv,
+                    so_tien_can_nop=instance.so_tien_moi_nguoi,
+                    so_tien_da_nop=0,
+                    trang_thai='CHUA_NOP'
+                )
+            )
+            
+            # 3. Viết thư báo gửi Bưu tá cho từng người (Nếu người đó có tài khoản User)
+            if tv.user:
+                han_chot_str = instance.han_chot.strftime('%d/%m/%Y') if instance.han_chot else 'Chưa có'
+                tao_thong_bao.append(
+                    ThongBaoBuuTa(
+                        nguoi_nhan=tv.user,
+                        tieu_de=f"📢 Đợt thu quỹ mới: {instance.ten_dot}",
+                        noi_dung=f"Thủ quỹ vừa tạo đợt thu mới. Định mức của sếp là {int(instance.so_tien_moi_nguoi):,}đ. Hạn chót: {han_chot_str}. Hãy trích ví web để nộp ngay nhé!",
+                        loai='FINANCE',
+                        link_url='/tien-do/'
+                    )
+                )
+        
+        # 4. Lưu đồng loạt vào Database
+        if tao_tien_do:
+            TienDoDongQuy.objects.bulk_create(tao_tien_do)
+        if tao_thong_bao:
+            ThongBaoBuuTa.objects.bulk_create(tao_thong_bao)
+@receiver(post_save, sender='quanlyquy.Transaction') # Gọi thẳng bằng tên app.Model
+@receiver(post_save, sender='quanlyquy.Transaction')
+def tu_dong_cap_nhat_tien_do_moi(sender, instance, created, **kwargs):
+    # Dùng apps.get_model để lấy Class an toàn
+    TienDoDongQuy = apps.get_model('quanlyquy', 'TienDoDongQuy')
+    Transaction = apps.get_model('quanlyquy', 'Transaction')
+    
+    # Logic của sếp
+    if instance.type == 'THU' and instance.status == 'SUCCESS' and instance.collection_period:
+        tiendo, _ = TienDoDongQuy.objects.get_or_create(
+            dot_thu=instance.collection_period,
+            thanh_vien=instance.user.thanhvien,
+            defaults={'so_tien_can_nop': instance.collection_period.amount_required, 'so_tien_da_nop': 0}
+        )
+        
+        tong_da_nop = Transaction.objects.filter(
+            user=instance.user,
+            collection_period=instance.collection_period,
+            status='SUCCESS',
+            type='THU'
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        
+        tiendo.so_tien_da_nop = tong_da_nop
+        tiendo.trang_thai = 'DU' if tong_da_nop >= tiendo.so_tien_can_nop else 'THIEU'
+        tiendo.save()
+class KhoTaiNguyen(BaseModel):  # Hoặc models.Model tùy theo project của sếp
+    LOAI_TAI_KHOAN = [
+        ('CHATGPT', 'Tài khoản ChatGPT Plus'),
+        ('GEMINI', 'Tài khoản Gemini Advanced'),
+        ('CANVA', 'Tài khoản Canva Pro (Link Đội nhóm)'),
+        ('OTHER', 'Tài nguyên Premium khác'),
+    ]
+    
+    ten_tai_nguyen = models.CharField(max_length=150, verbose_name="Tên tài nguyên (VD: Canva Pro Nhóm 1)")
+    loai = models.CharField(max_length=20, choices=LOAI_TAI_KHOAN, default='OTHER', verbose_name="Phân loại tài nguyên")
+    tai_khoan = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tài khoản / Email đăng nhập")
+    mat_khau = models.CharField(max_length=255, blank=True, null=True, verbose_name="Mật khẩu / Key kích hoạt")
+    huong_dan = models.TextField(blank=True, null=True, verbose_name="Hướng dẫn sử dụng / Link kích hoạt nhanh")
+    is_active = models.BooleanField(default=True, verbose_name="Trạng thái hoạt động")
+
+    class Meta:
+        verbose_name = "Tài Nguyên Lớp"
+        verbose_name_plural = "🎁 Kho Tài Nguyên Dùng Chung"
+
+    def __str__(self):
+        return self.ten_tai_nguyen

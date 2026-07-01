@@ -82,6 +82,17 @@
                 <div class="dot-indicator {% if '/thong-ke/' in request.path %}pulse-dot{% endif %}" style="background: #5483B3;"></div>
             </a>
 
+            <a href="{% url 'theo_doi_dau_tu' %}" class="sidebar-link {% if request.resolver_match.url_name == 'theo_doi_dau_tu' %}active{% endif %}" style="color: #6366f1;">
+                <i class="fa-solid fa-chart-line" style="font-size: 18px; width: 24px; text-align: center;"></i> <span>Theo Dõi Đầu Tư</span>
+                <div class="dot-indicator {% if request.resolver_match.url_name == 'theo_doi_dau_tu' %}pulse-dot{% endif %}" style="background: #6366f1;"></div>
+            </a>
+
+            <a href="/kho-tai-nguyen/" class="sidebar-link {% if request.path == '/kho-tai-nguyen/' %}active{% endif %}" style="color: #10b981;">
+                <i class="fa-solid fa-folder-open" style="font-size: 18px; width: 24px; text-align: center;"></i> <span>Kho Tài Nguyên</span>
+                <div class="dot-indicator {% if request.path == '/kho-tai-nguyen/' %}pulse-dot{% endif %}" style="background: #10b981;"></div>
+            </a>
+
+
             <div class="nav-group-label" style="font-size: 11px; color: var(--text-light); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px 10px;">Gamification</div>
             
             <a href="/gamification/" class="sidebar-link {% if '/gamification/' in request.path %}active{% endif %}" style="color: #D3A376;">
@@ -283,71 +294,65 @@
         </div>
     </div>
 
-    <div class="card-slider animate-fade-in" style="animation-delay: 0.2s; overflow-x: auto; padding-bottom: 15px; margin-bottom: 5px; display: flex; gap: 20px;">
+ <div class="card-slider animate-fade-in" style="animation-delay: 0.2s; overflow-x: auto; padding-bottom: 15px; margin-bottom: 5px; display: flex; gap: 20px;">
+    
+    <div class="premium-bank-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #4338ca 100%); min-width: 300px; padding: 22px; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer;"
+         onclick="openBigCard('Quỹ Lớp', '{{ so_du }}', '8888 7777 6666 {{ request.user.id }}', 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)')">
+        <div style="position: absolute; top: -50px; right: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
         
-        <div class="premium-bank-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #4338ca 100%);"
-             onclick="openBigCard('Quỹ Ngân Hàng', '{{ so_du }}', '9876 5432 1098 1890', 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)')">
-            <div style="position: absolute; top: -50px; right: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; z-index: 1;">
-                <div>
-                    <p style="margin:0; font-size: 10px; opacity: 0.8; letter-spacing: 2px;">DEBIT CARD</p>
-                    <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 15px;">Quỹ Ngân Hàng</p>
-                </div>
-                <i class="fa-brands fa-cc-visa" style="font-size: 38px; color: rgba(255,255,255,0.9);"></i>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; position: relative;">
+            <div>
+                <p style="margin:0; font-size: 9px; opacity: 0.7; letter-spacing: 1.5px; font-weight: 700;">CLASS DEBIT CARD</p>
+                <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 15px; text-transform: uppercase; color: #fff;">Quỹ Lớp</p>
             </div>
-            
-            <div style="z-index: 1;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <i class="fa-solid fa-microchip" style="font-size: 28px; color: #fbbf24;"></i>
-                    <i class="fa-solid fa-wifi" style="transform: rotate(90deg); font-size: 18px; opacity: 0.8;"></i>
-                </div>
-                <h1 class="sensitive-data" data-value="{{ so_du }} đ" style="margin: 0; font-size: 28px; letter-spacing: 1px;">*** đ</h1>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; z-index: 1;">
-                <div>
-                    <span class="sensitive-data" data-value="9876 5432 1098 1890" style="letter-spacing: 3px; font-size: 14px; font-family: monospace; display: block; margin-bottom: 2px;">**** **** **** 1890</span>
-                    <span style="font-weight: 800; font-size: 11px; text-transform: uppercase;">{{ request.user.username|upper }}</span>
-                </div>
-                <div style="text-align: right;">
-                    <span style="font-size: 8px; opacity: 0.7; display: block;">VALID THRU</span>
-                    <span style="font-weight: 800; font-size: 13px;">05/26</span>
-                </div>
-            </div>
+            <i class="fa-brands fa-cc-visa" style="font-size: 36px; color: rgba(255,255,255,0.9);"></i>
         </div>
-
-        <div class="premium-bank-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%);"
-             onclick="openBigCard('Quỹ Tiền Mặt', '0', 'CASH 0001 0002 0003', 'linear-gradient(135deg, #10b981 0%, #059669 100%)')">
-            <div style="position: absolute; bottom: -50px; left: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; z-index: 1;">
-                <div>
-                    <p style="margin:0; font-size: 10px; opacity: 0.8; letter-spacing: 2px;">CASH FUND</p>
-                    <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 15px;">Quỹ Tiền Mặt</p>
-                </div>
-                <i class="fa-solid fa-money-bill-wave" style="font-size: 30px; opacity: 0.9;"></i>
+        
+        <div style="z-index: 1; margin-top: 18px; position: relative;">
+            <h1 class="sensitive-data" data-value="{{ so_du }} đ" style="margin: 0; font-size: 26px; letter-spacing: 0.5px; font-weight: 800; color: #fff;">*** đ</h1>
+        </div>
+        
+        <div style="z-index: 1; margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; position: relative;">
+            <div>
+                <p id="card-num-1" class="sensitive-data" data-value="8888 7777 6666 {{ request.user.id }}" style="margin: 0 0 4px 0; font-family: monospace; font-size: 13px; letter-spacing: 1.5px; color: rgba(255,255,255,0.9);">**** **** **** {{ request.user.id }}</p>
+                <p style="margin: 0; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">{{ request.user.full_name|default:request.user.username }}</p>
             </div>
-            
-            <div style="z-index: 1;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <i class="fa-solid fa-vault" style="font-size: 24px; color: #ffffff; opacity: 0.8;"></i>
-                </div>
-                <h1 class="sensitive-data" data-value="{{ so_du_cash|default:'0' }} đ" style="margin: 0; font-size: 28px; letter-spacing: 1px;">*** đ</h1>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; z-index: 1;">
-                <div>
-                    <span class="sensitive-data" data-value="CASH 0001 0002 0003" style="letter-spacing: 3px; font-size: 14px; font-family: monospace; display: block; margin-bottom: 2px;">**** **** **** 0003</span>
-                    <span style="font-weight: 800; font-size: 11px; text-transform: uppercase;">THỦ QUỸ HỆ THỐNG</span>
-                </div>
-                <div style="text-align: right;">
-                    <span style="font-size: 8px; opacity: 0.7; display: block;">STATUS</span>
-                    <span style="font-weight: 800; font-size: 13px;">ACTIVE</span>
-                </div>
+            <div style="text-align: right;">
+                <p style="margin: 0; font-size: 7px; opacity: 0.6; font-weight: bold;">VALID THRU</p>
+                <p style="margin: 0; font-weight: 700; font-size: 12px; color: #fff;">05/28</p>
             </div>
         </div>
     </div>
+
+    <div class="premium-bank-card" style="background: linear-gradient(135deg, #0d9488 0%, #115e59 100%); min-width: 300px; padding: 22px; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer;"
+         onclick="openBigCard('Ví Web', '{{ request.user.thanhvien.so_du_vi_web|default:0 }}', '9999 0000 1111 {{ request.user.id }}', 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)')">
+        <div style="position: absolute; top: -40px; left: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; position: relative;">
+            <div>
+                <p style="margin:0; font-size: 9px; opacity: 0.7; letter-spacing: 1.5px; font-weight: 700;">WEB PREPAID WALLET</p>
+                <p style="margin: 2px 0 0 0; font-weight: 800; font-size: 15px; text-transform: uppercase; color: #fff;">Ví Tài Khoản Web</p>
+            </div>
+            <i class="fa-solid fa-wallet" style="font-size: 26px; color: rgba(255,255,255,0.9);"></i>
+        </div>
+        
+        <div style="z-index: 1; margin-top: 18px; position: relative;">
+            <h1 class="sensitive-data" data-value="{{ request.user.thanhvien.so_du_vi_web|default:0 }} đ" style="margin: 0; font-size: 26px; letter-spacing: 0.5px; font-weight: 800; color: #fff;">*** đ</h1>
+        </div>
+        
+        <div style="z-index: 1; margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; position: relative;">
+            <div>
+                <p id="card-num-2" class="sensitive-data" data-value="9999 0000 1111 {{ request.user.id }}" style="margin: 0 0 4px 0; font-family: monospace; font-size: 13px; letter-spacing: 1.5px; color: rgba(255,255,255,0.9);">**** **** **** {{ request.user.id }}</p>
+                <p style="margin: 0; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">{{ request.user.username }}</p>
+            </div>
+            <span style="font-size: 10px; font-weight: 800; background: rgba(0,0,0,0.25); padding: 5px 12px; border-radius: 8px; tracking: 0.5px; border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer;" 
+      onclick="event.stopPropagation(); window.location.href='/nap-tien/';">
+    NẠP TIỀN NGAY
+</span>
+        </div>
+    </div>
+
+</div>
 
     <div class="info-grid-wrapper-pro">
     <div class="card-info-grid-3d">
@@ -556,6 +561,24 @@
 </div>
 
 <script>
+    async function submitWalletTopUp() {
+    const amount = document.getElementById('walletAmount').value;
+    const method = document.getElementById('walletMethod').value;
+    
+    // Gửi dữ liệu về views.py (hàm api_nap_vi_web)
+    const response = await fetch('/api/nap-vi-web/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ so_tien: amount, phuong_thuc: method })
+    });
+    
+    const result = await response.json();
+    alert(result.message);
+    if(result.status === 'success') {
+        closeModal('topUpWalletModal');
+        location.reload(); // Tải lại để hiện số tiền mới
+    }
+}
 async function confirmCash(id, btn) {
     if(!confirm("Xác nhận sếp đã nhận đủ tiền mặt?")) return;
     try {
@@ -1253,5 +1276,20 @@ async function confirmCash(id, btn) {
     </script>
     <script src="{% static 'quanlyquy/js/dashboard.js' %}"></script>
         {% include 'quanlyquy/quest_popup.html' %} 
+        <div class="modal-overlay" id="topUpWalletModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:#1a1c23; padding:20px; border-radius:20px; width:350px; color:white;">
+        <h3>Nạp Tiền Ví Web</h3>
+        <form id="walletForm">
+            <input type="number" id="walletAmount" placeholder="Nhập số tiền..." style="width:100%; padding:10px; margin:10px 0; border-radius:8px; border:none;">
+            
+            <select id="walletMethod" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
+                <option value="CASH">Tiền mặt (Chờ thủ quỹ duyệt)</option>
+                <option value="BANK">QR Ngân hàng (Auto duyệt)</option>
+            </select>
+            
+            <button type="button" onclick="submitWalletTopUp()" style="width:100%; padding:10px; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer;">XÁC NHẬN NẠP</button>
+        </form>
+    </div>
+</div>
 </body>
 </html>

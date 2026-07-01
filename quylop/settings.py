@@ -102,6 +102,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'quanlyquy.context_processors.thong_tin_vi_thanh_vien',
             ],
         },
     },

@@ -180,7 +180,7 @@
                 </div>
 
                 <div class="stat-card hover-lift" 
-     onclick="showKpiDetail('conno')" 
+     onclick="{% if is_admin %}showKpiDetail('conno'){% else %}showKpiDetail('tiendo'){% endif %}" 
      style="position: relative; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 24px; backdrop-filter: blur(10px); transition: 0.3s; border-left: 4px solid {% if is_admin %}#ef4444{% else %}var(--theme-primary){% endif %}; cursor: pointer;">
     
     {% if is_admin %}
@@ -401,17 +401,29 @@
         <input type="hidden" id="inp-phuong-thuc-td" value="CASH">
 
         <!-- Ô CHỌN PHƯƠNG THỨC NỘP -->
-        <label style="display: block; color: #94a3b8; font-size: 11px; margin-bottom: 10px; font-weight: 800; text-transform: uppercase;">Hình thức nộp:</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-            <div class="pay-method-card active" id="m-cash-td" onclick="selectPayMethodTD('CASH')" style="border: 2px solid #10b981; padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s;">
-                <i class="fa-solid fa-hand-holding-dollar" style="font-size: 20px; color: #10b981;"></i>
-                <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: 800; color: #fff;">TIỀN MẶT</p>
-            </div>
-            <div class="pay-method-card" id="m-bank-td" onclick="selectPayMethodTD('BANK')" style="border: 2px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s;">
-                <i class="fa-solid fa-qrcode" style="font-size: 20px; color: #00d2ff;"></i>
-                <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: 800; color: #fff;">QUÉT QR</p>
-            </div>
-        </div>
+        <!-- Ô CHỌN PHƯƠNG THỨC NỘP (ĐÃ CẬP NHẬT ĐẦY ĐỦ SỰ KIỆN CLICK) -->
+<label style="display: block; color: #94a3b8; font-size: 11px; margin-bottom: 10px; font-weight: 800; text-transform: uppercase;">Hình thức nộp:</label>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+    
+    <!-- 1. Nút Ví Web (Đã được bổ sung onclick để không bị ẩn/đơ) -->
+    <div class="pay-method-card" id="m-wallet-td" onclick="window.selectPayMethodTD('WEB_WALLET')" style="border: 2px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s;">
+        <i class="fa-solid fa-wallet" style="font-size: 20px; color: #a855f7;"></i>
+        <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: 800; color: #fff;">VÍ WEB</p>
+    </div>
+
+    <!-- 2. Nút Tiền Mặt -->
+    <div class="pay-method-card active" id="m-cash-td" onclick="window.selectPayMethodTD('CASH')" style="border: 2px solid #10b981; padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s;">
+        <i class="fa-solid fa-hand-holding-dollar" style="font-size: 20px; color: #10b981;"></i>
+        <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: 800; color: #fff;">TIỀN MẶT</p>
+    </div>
+
+    <!-- 3. Nút Quét QR -->
+    <div class="pay-method-card" id="m-bank-td" onclick="window.selectPayMethodTD('BANK')" style="border: 2px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s;">
+        <i class="fa-solid fa-qrcode" style="font-size: 20px; color: #00d2ff;"></i>
+        <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: 800; color: #fff;">QUÉT QR</p>
+    </div>
+
+</div>
 
         <div style="margin-bottom: 20px;">
             <label id="labelNopCho" style="display: block; color: #94a3b8; font-size: 11px; margin-bottom: 8px; font-weight: 800; text-transform: uppercase;">Đóng cho:</label>
@@ -516,9 +528,9 @@
 </style>
 
 <script src="{% static 'quanlyquy/js/tien_do.js' %}"></script>
+<script src="{% static 'quanlyquy/js/tien_do.js' %}"></script>
 <script>
-    // BỔ SUNG 2 HÀM NÀY VÀO ĐỂ MỞ ĐƯỢC AVATAR
-    function openModal(id) { 
+function openModal(id) { 
     const m = document.getElementById(id);
     if(m) { 
         m.style.display = 'flex'; 
@@ -526,49 +538,31 @@
         m.classList.add('active');
     }
 }
-function selectPayMethodTD(method) {
-    document.getElementById('inp-phuong-thuc-td').value = method;
-    const btn = document.getElementById('btnSubmitNop');
-    const cashCard = document.getElementById('m-cash-td');
-    const bankCard = document.getElementById('m-bank-td');
 
-    if (method === 'BANK') {
-        bankCard.style.borderColor = '#00d2ff';
-        cashCard.style.borderColor = 'rgba(255,255,255,0.1)';
-        btn.innerHTML = 'TIẾP TỤC QUÉT MÃ QR <i class="fa-solid fa-qrcode ms-2"></i>';
-        btn.style.background = '#00d2ff';
-    } else {
-        cashCard.style.borderColor = '#10b981';
-        bankCard.style.borderColor = 'rgba(255,255,255,0.1)';
-        btn.innerHTML = 'XÁC NHẬN NỘP TIỀN MẶT <i class="fa-solid fa-check ms-2"></i>';
-        btn.style.background = '#10b981';
-    }
+function closeModal(id) { 
+    const modal = document.getElementById(id);
+    if(modal) modal.style.display = 'none'; 
 }
-    function closeModal(id) { 
-        const modal = document.getElementById(id);
-        if(modal) modal.style.display = 'none'; 
-    }
-    window.FUND_DATA = {
-        csrfToken: '{{ csrf_token }}',
-        dotThuId: '{{ dot_thu.id }}',
-        percent: '{{ percent|default:0 }}',
-        totalNeeded: '{{ total_needed|default:"0" }}',
-        totalCollected: '{{ total_collected|default:"0" }}',
-        debtCount: '{{ debt_count|default:"0" }}',
-        deadline: '{{ deadline }}',
-        tenDot: '{{ dot_thu.ten_dot|default:"Chưa có thông tin" }}',
-        tenQuy: '{{ dot_thu.loai_quy.ten_quy|default:"---" }}',
-        dinhMuc: '{{ dot_thu.so_tien_moi_nguoi|default:"0" }}',
-        clearUrl: "{% url 'api_clear_notifications' %}",
-        isAdmin: {% if is_admin %}true{% else %}false{% endif %},
-        // Danh sách nợ chuyển thành JSON cho JS đọc được
-        danhSachNo: [
-            {% for tv in danh_sach_no %}
-            { ho_ten: "{{ tv.ho_ten }}", mssv: "{{ tv.mssv }}" },
-            {% endfor %}
-        ]
-    };
-    
+
+window.FUND_DATA = {
+    csrfToken: '{{ csrf_token }}',
+    dotThuId: '{{ dot_thu.id }}',
+    percent: '{{ percent|default:0 }}',
+    totalNeeded: '{{ total_needed|default:"0" }}',
+    totalCollected: '{{ total_collected|default:"0" }}',
+    debtCount: '{{ debt_count|default:"0" }}',
+    deadline: '{{ deadline }}',
+    tenDot: '{{ dot_thu.ten_dot|default:"Chưa có thông tin" }}',
+    tenQuy: '{{ dot_thu.loai_quy.ten_quy|default:"---" }}',
+    dinhMuc: '{{ dot_thu.so_tien_moi_nguoi|default:"0" }}',
+    clearUrl: "{% url 'api_clear_notifications' %}",
+    isAdmin: {% if is_admin %}true{% else %}false{% endif %},
+    danhSachNo: [
+        {% for tv in danh_sach_no %}
+        { ho_ten: "{{ tv.ho_ten }}", mssv: "{{ tv.mssv }}" },
+        {% endfor %}
+    ]
+};
 </script>
 </body>
 </html>

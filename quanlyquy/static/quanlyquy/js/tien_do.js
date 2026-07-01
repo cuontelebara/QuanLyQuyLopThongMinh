@@ -1,8 +1,71 @@
 /* ======================================================
-   XỬ LÝ NGHIỆP VỤ TIẾN ĐỘ THU (tien_do.js) - BẢN FULL GỐC
+   XỬ LÝ NGHIỆP VỤ ĐÓNG QUỸ LỚP - BẢN FULL ĐẦY ĐỦ 100% (BỌC THÉP)
    ====================================================== */
 
-// 1. TIỆN ÍCH HỆ THỐNG
+// 1. LUỒNG ĐỔI PHƯƠNG THỨC THANH TOÁN (ƯU TIÊN LÊN ĐẦU FILE)
+window.selectPayMethodTD = function(method) {
+    console.log(`[SYSTEM] Đang kích hoạt phương thức: ${method}`);
+    try {
+        const inpMethod = document.getElementById('inp-phuong-thuc-td');
+        const btn = document.getElementById('btnSubmitNop');
+        
+        const walletCard = document.getElementById('m-wallet-td');
+        const cashCard = document.getElementById('m-cash-td');
+        const bankCard = document.getElementById('m-bank-td');
+
+        if (!inpMethod) {
+            console.error("Không tìm thấy ô input ẩn id='inp-phuong-thuc-td'!");
+            return;
+        }
+        inpMethod.value = method;
+
+        // Khôi phục trạng thái viền mờ ban đầu cho cả 3 thẻ phương thức
+        [walletCard, cashCard, bankCard].forEach(card => {
+            if(card) {
+                card.style.borderColor = 'rgba(255,255,255,0.1)';
+                card.style.background = 'rgba(255,255,255,0.02)';
+                card.style.boxShadow = 'none';
+            }
+        });
+
+        // Kích hoạt màu Neon sáng và text tương ứng khi nhấn chọn
+        if (method === 'WEB_WALLET') {
+            if(walletCard) {
+                walletCard.style.borderColor = '#a855f7';
+                walletCard.style.background = 'rgba(168, 85, 247, 0.1)';
+                walletCard.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.3)';
+            }
+            if(btn) {
+                btn.innerHTML = 'XÁC NHẬN TRÍCH VÍ WEB <i class="fa-solid fa-wallet ms-2"></i>';
+                btn.style.background = '#a855f7';
+            }
+        } else if (method === 'BANK') {
+            if(bankCard) {
+                bankCard.style.borderColor = '#00d2ff';
+                bankCard.style.background = 'rgba(0, 210, 255, 0.1)';
+                bankCard.style.boxShadow = '0 0 15px rgba(0, 210, 255, 0.3)';
+            }
+            if(btn) {
+                btn.innerHTML = 'TIẾP TỤC QUÉT MÃ QR <i class="fa-solid fa-qrcode ms-2"></i>';
+                btn.style.background = '#00d2ff';
+            }
+        } else {
+            if(cashCard) {
+                cashCard.style.borderColor = '#10b981';
+                cashCard.style.background = 'rgba(16, 185, 129, 0.1)';
+                cashCard.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.3)';
+            }
+            if(btn) {
+                btn.innerHTML = 'XÁC NHẬN NỘP TIỀN MẶT <i class="fa-solid fa-check ms-2"></i>';
+                btn.style.background = '#10b981';
+            }
+        }
+    } catch (err) {
+        console.error("Lỗi thực thi đổi phương thức:", err);
+    }
+};
+
+// 2. CÁC HÀM HỆ THỐNG & TIỆN ÍCH PHỤ TRỢ
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -20,51 +83,21 @@ function getCookie(name) {
 
 window.openModal = function(id) { 
     const m = document.getElementById(id);
-    if(m) {
-        m.style.display = 'flex';
-        m.style.zIndex = '10000';
-    }
+    if(m) m.style.display = 'flex';
 };
 
 window.closeModal = function(id) { 
     const m = document.getElementById(id);
     if(m) m.style.display = 'none'; 
 };
-window.selectPayMethodTD = function(method) {
-    document.getElementById('inp-phuong-thuc-td').value = method;
-    const btn = document.getElementById('btnSubmitNop');
-    const cashCard = document.getElementById('m-cash-td');
-    const bankCard = document.getElementById('m-bank-td');
 
-    if (method === 'BANK') {
-        bankCard.style.borderColor = '#00d2ff';
-        bankCard.style.background = 'rgba(0, 210, 255, 0.05)';
-        cashCard.style.borderColor = 'rgba(255,255,255,0.1)';
-        cashCard.style.background = 'rgba(255,255,255,0.02)';
-        btn.innerHTML = 'TIẾP TỤC QUÉT MÃ QR <i class="fa-solid fa-qrcode ms-2"></i>';
-        btn.style.background = '#00d2ff';
-    } else {
-        cashCard.style.borderColor = '#10b981';
-        cashCard.style.background = 'rgba(16, 185, 129, 0.05)';
-        bankCard.style.borderColor = 'rgba(255,255,255,0.1)';
-        bankCard.style.background = 'rgba(255,255,255,0.02)';
-        btn.innerHTML = 'XÁC NHẬN NỘP TIỀN MẶT <i class="fa-solid fa-check ms-2"></i>';
-        btn.style.background = '#10b981';
-    }
-}
-
-// 2. TỰ ĐỘNG THÊM DẤU CHẤM KHI NHẬP TIỀN (Gõ 200000 -> 200.000)
 window.formatMoneyInput = function(input) {
     let value = input.value.replace(/\D/g, ""); 
     if (value !== "") {
-        value = new Intl.NumberFormat('vi-VN').format(parseInt(value));
-        input.value = value;
-    } else {
-        input.value = "";
+        input.value = new Intl.NumberFormat('vi-VN').format(parseInt(value));
     }
-}
+};
 
-// 3. HIỂN THỊ THÔNG BÁO (TOAST)
 window.showToast = function(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -83,7 +116,7 @@ window.showToast = function(message, type = 'success') {
     }, 4000);
 };
 
-// 4. XỬ LÝ MODAL KPI CHI TIẾT (FULL DỮ LIỆU CỦA SẾP)
+// 3. XỬ LÝ HIỂN THỊ MODAL KPI CHI TIẾT (HÀM QUAN TRỌNG BỊ KHUYẾT)
 window.showKpiDetail = function(type) {
     const modal = document.getElementById('kpiModal');
     const title = document.getElementById('kpiModalTitle');
@@ -91,7 +124,7 @@ window.showKpiDetail = function(type) {
     const d = window.FUND_DATA;
 
     if (!modal || !title || !content || !d) {
-        console.error("Thiếu container modal hoặc window.FUND_DATA chưa được khai báo!");
+        console.error("Lỗi cấu trúc: Thiếu phần tử Modal hoặc cấu hình window.FUND_DATA chưa được nạp!");
         return;
     }
 
@@ -129,7 +162,7 @@ window.showKpiDetail = function(type) {
             ? d.danhSachNo.map(tv => `
                 <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
                     <span style="color: white; font-weight: 600;">${tv.ho_ten}</span>
-                    <span style="color: #94a3b8; font-family: monospace;">${tv.mssv}</span>
+                    <span style="color: #94a3b8; font-family: monospace; font-size: 13px;">${tv.mssv}</span>
                 </div>`).join('')
             : '<p style="text-align: center; padding: 20px; color: #10b981;">Tuyệt vời! Không ai nợ quỹ.</p>';
 
@@ -137,7 +170,7 @@ window.showKpiDetail = function(type) {
             <p>Có <strong style="color: #f87171;">${d.debtCount}</strong> thành viên chưa hoàn tất:</p>
             <div style="max-height: 250px; overflow-y: auto; padding-right: 5px;">${listNoHtml}</div>
             ${d.isAdmin ? `
-                <button onclick="runMassRemind()" id="massRemindBtn" class="hover-scale" style="width: 100%; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 12px; border-radius: 10px; margin-top: 20px; font-weight: 800; cursor: pointer;">
+                <button onclick="runMassRemind()" id="massRemindBtn" style="width: 100%; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 12px; border-radius: 10px; margin-top: 20px; font-weight: 800; cursor: pointer; transition: 0.2s;">
                     <i class="fa-solid fa-bullhorn me-2"></i> NHẮC NỢ HÀNG LOẠT 🚀
                 </button>` : ''}
         `;
@@ -145,11 +178,11 @@ window.showKpiDetail = function(type) {
     modal.style.display = 'flex';
 };
 
-// 5. NGHIỆP VỤ NHẮC NỢ & DỌN DẸP THÔNG BÁO
+// 4. NGHIỆP VỤ NHẮC NỢ & DỌN DẸP HÒM THƯ THÔNG BÁO
 window.runMassRemind = function() {
     const btn = document.getElementById('massRemindBtn');
     if (!btn) return;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang băm lệnh...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi lệnh...';
     btn.disabled = true;
 
     fetch('/api/mass-remind/', {
@@ -159,11 +192,11 @@ window.runMassRemind = function() {
     })
     .then(res => res.json())
     .then(data => {
-        showToast(data.message, data.status);
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> ĐÃ NHẮC XONG';
+        window.showToast(data.message, data.status);
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> ĐẠI PHÁT THÀNH CÔNG';
     })
     .catch(() => {
-        showToast("Lỗi kết nối máy chủ!", "error");
+        window.showToast("Lỗi kết nối máy chủ!", "error");
         btn.disabled = false;
     });
 };
@@ -192,7 +225,7 @@ window.executeDeleteNotifications = function() {
         }
     })
     .then(res => {
-        if (!res.ok) throw new Error('Lỗi server');
+        if (!res.ok) throw new Error('Lỗi liên kết máy chủ');
         return res.json();
     })
     .then(data => {
@@ -203,89 +236,99 @@ window.executeDeleteNotifications = function() {
             if(container) {
                 container.innerHTML = `<div style="text-align: center; padding: 50px 0;"><i class="fa-solid fa-mailbox" style="font-size: 30px; opacity: 0.1; margin-bottom: 20px;"></i><p style="font-weight: 800; color: white;">Hộp thư trống</p></div>`;
             }
-            showToast("Hòm thư đã sạch bóng!", "success");
+            window.showToast("Hòm thư đã sạch bóng!", "success");
         }
     })
-    .catch(() => showToast("Lỗi: Không thể kết nối máy chủ!", "error"))
+    .catch(() => window.showToast("Lỗi: Không thể kết nối máy chủ!", "error"))
     .finally(() => {
         btn.innerHTML = originalHtml;
         btn.style.pointerEvents = 'auto';
     });
 };
 
-// 6. XỬ LÝ NGHIỆP VỤ HẠCH TOÁN (PHÂN QUYỀN ADMIN & THÀNH VIÊN)
+// 5. LOGIC SUBMIT HẠCH TOÁN NỘP TIỀN
 window.submitNopHo = function() {
     const amountInput = document.getElementById('nopHoAmount');
+    const tvId = document.getElementById('nopHoId').value;
     const tvName = document.getElementById('nopHoName').value;
-    const method = document.getElementById('inp-phuong-thuc-td').value;
-
-    // Làm sạch số tiền (bỏ dấu chấm)
-    const cleanAmount = amountInput.value.replace(/\./g, "").replace(/\D/g, ""); 
-
+    const method = document.getElementById('inp-phuong-thuc-td').value; 
+    const cleanAmount = amountInput.value.replace(/\./g, "").replace(/\D/g, "");
+    
     if (!cleanAmount || parseInt(cleanAmount) < 1000) {
-        showToast("Số tiền không hợp lệ!", "error");
+        window.showToast("Số tiền không hợp lệ!", "error");
         return;
     }
 
-    // --- KHÚC NÀY LÀ CHỖ HIỆN MÃ QR ---
-    if (method === 'BANK') {
-        const BANK_ID = "MB"; // Thay bằng ngân hàng của sếp (VD: VCB, ACB, ICB...)
-        const ACCOUNT_NO = "123456789"; // Thay bằng STK của sếp
-        // Tạo nội dung không dấu
-        const CONTENT = `FUNDSMART ${tvName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    const sendNopQuyRequest = (payMethod) => {
+        if (payMethod === 'WEB_WALLET') {
+            window.showToast("Đang kiểm tra số dư và trích ví Web...", "info");
+        } else {
+            window.showToast("Đang gửi yêu cầu đóng quỹ...", "info");
+        }
         
-        // Link tạo mã QR tự động
+        // 🌟 ĐÃ ĐỔI URL GỌI VỀ ĐÚNG HÀM CHUẨN CỦA API_VIEWS
+        fetch('/api/nop-quy/', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') 
+            },
+            body: JSON.stringify({
+                tv_id: tvId,
+                so_tien: cleanAmount,
+                dot_thu_id: window.FUND_DATA.dotThuId,
+                phuong_thuc: payMethod, 
+                ly_do: "Đóng quỹ lớp"
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.showToast(data.message, "success");
+                setTimeout(() => window.location.reload(), 1500);
+            } else if (data.status === 'error' && data.action === 'redirect_to_deposit') {
+                window.showToast(data.message, "error");
+                setTimeout(() => { window.location.href = '/nap-tien/'; }, 2000);
+            } else {
+                window.showToast(data.message, "error");
+            }
+        })
+        .catch(() => window.showToast("Lỗi kết nối máy chủ!", "error"));
+    };
+    if (method === 'BANK') {
+        const BANK_ID = "MB"; 
+        const ACCOUNT_NO = "123456789"; 
+        const CONTENT = `FUNDSMART ${tvName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
         const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact.png?amount=${cleanAmount}&addInfo=${encodeURIComponent(CONTENT)}`;
-
-        // Tìm khung nội dung của Modal để dán đè QR vào
         const modalContent = document.querySelector('#nopHoModal > div');
         
-        // BIẾN MODAL THÀNH MÀN HÌNH QUÉT MÃ
         modalContent.innerHTML = `
             <div style="text-align: center; padding: 10px;">
                 <button onclick="location.reload()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 22px;"><i class="fa-solid fa-xmark"></i></button>
                 <h3 style="color: #fff; margin-bottom: 20px; font-weight: 900;">MÃ QR NỘP QUỸ</h3>
-                <div style="background: #fff; padding: 15px; border-radius: 20px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="background: #fff; padding: 15px; border-radius: 20px; display: inline-block; margin-bottom: 20px;">
                     <img src="${qrUrl}" style="width: 260px; height: 260px; display: block; border-radius: 10px;">
                 </div>
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 25px;">
                     <p style="color: #00d2ff; font-weight: 900; font-size: 22px; margin: 0;">${amountInput.value}đ</p>
                     <p style="color: #94a3b8; font-size: 11px; margin: 5px 0 0 0;">Nội dung: <b>${CONTENT}</b></p>
                 </div>
-                <button onclick="location.reload()" style="width: 100%; padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: white; border: none; font-weight: 900; cursor: pointer;">TÔI ĐÃ CHUYỂN KHOẢN XONG</button>
+                <button id="btnConfirmQrDone" style="width: 100%; padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: white; border: none; font-weight: 900; cursor: pointer;">TÔI ĐÃ CHUYỂN KHOẢN XONG</button>
             </div>
         `;
-        return; // DỪNG LẠI TẠI ĐÂY - KHÔNG GỬI LỆNH LÊN SERVER
+
+        document.getElementById('btnConfirmQrDone').addEventListener('click', function() {
+            document.getElementById('nopHoModal').style.display = 'none';
+            sendNopQuyRequest('BANK');
+        });
+        return; 
     }
 
-    // --- NẾU LÀ TIỀN MẶT THÌ MỚI CHẠY TIẾP LUỒNG DƯỚI NÀY ---
     document.getElementById('nopHoModal').style.display = 'none';
-    showToast("Đang gửi xác nhận đóng quỹ cá nhân...", "info");
-
-    fetch('/api/nop-quy-ho/', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken') 
-        },
-        body: JSON.stringify({
-            tv_id: document.getElementById('nopHoId').value,
-            so_tien: cleanAmount,
-            dot_thu_id: window.FUND_DATA.dotThuId,
-            phuong_thuc: 'CASH'
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            showToast("Đã gửi yêu cầu nộp tiền mặt!", "success");
-            setTimeout(() => window.location.reload(), 1000);
-        }
-    });
+    sendNopQuyRequest(method);
 };
 
-
-// 8. KHỞI TẠO MODAL GIAO DỊCH (TỐI ƯU TRẢI NGHIỆM VÀ ĐỊNH DẠNG)
+// 6. KHỞI TẠO POPUP KHI BẤM NÚT NỘP TIỀN
 window.openNopQuyCaNhan = function(targetId, displayName) {
     const modal = document.getElementById('nopHoModal');
     const inputId = document.getElementById('nopHoId');
@@ -296,7 +339,6 @@ window.openNopQuyCaNhan = function(targetId, displayName) {
         inputId.value = targetId;
         inputName.value = displayName || "Không xác định";
         
-        // FIX LỖI "200": Ép về chuỗi -> Quét sạch ký tự lạ -> Ép lại thành số nguyên -> Đóng mộc VNĐ
         let rawDinhMuc = String(window.FUND_DATA?.dinhMuc || "200000").replace(/\D/g, "");
         inputAmount.value = new Intl.NumberFormat('vi-VN').format(parseInt(rawDinhMuc));
 
@@ -306,16 +348,10 @@ window.openNopQuyCaNhan = function(targetId, displayName) {
         setTimeout(() => {
             modal.style.opacity = '1';
             modal.style.transition = 'opacity 0.2s ease-in-out';
-            
-            // Tự động focus và bôi đen toàn bộ số tiền
             inputAmount.focus();
             inputAmount.setSelectionRange(0, inputAmount.value.length);
         }, 50);
-
-        console.log(`[SYSTEM] Khởi tạo phiên hạch toán cho ID: ${targetId}`);
-    } else {
-        console.error("[CRITICAL] Lỗi cấu trúc Modal: Kiểm tra lại các ID trong HTML.");
-        showToast("Lỗi khởi tạo giao diện báo cáo!", "error");
+        console.log(`[SYSTEM] Đã khởi tạo phiên đóng quỹ cho thành viên ID: ${targetId}`);
     }
 };
 
@@ -329,7 +365,36 @@ window.toggleChatbot = function() {
     bot.style.pointerEvents = isClosed ? 'auto' : 'none';
     if (isClosed) document.getElementById('chat-input')?.focus();
 };
-// 9. CẬP NHẬT NGÀY GIỜ & KHỞI TẠO
+
+window.sendChatMessage = function() {
+    const input = document.getElementById('chat-input');
+    const body = document.getElementById('chat-body');
+    if (!input || !input.value.trim()) return;
+
+    const userMsg = input.value;
+    input.value = '';
+
+    // Render tin nhắn của User
+    body.innerHTML += `<div style="align-self: flex-end; background: var(--theme-primary); color: #0f172a; padding: 10px 15px; border-radius: 15px 0 15px 15px; font-size: 13px; font-weight: 700;">${userMsg}</div>`;
+    body.scrollTop = body.scrollHeight;
+
+    // Gọi API Chatbot
+    fetch('/api/chatbot/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ message: userMsg })
+    })
+    .then(res => res.json())
+    .then(data => {
+        body.innerHTML += `<div style="background: white; padding: 10px 15px; border-radius: 0 15px 15px 15px; font-size: 13px; max-width: 80%; align-self: flex-start; color: #334155;">${data.reply}</div>`;
+        body.scrollTop = body.scrollHeight;
+    })
+    .catch(() => {
+        body.innerHTML += `<div style="background: white; padding: 10px 15px; border-radius: 0 15px 15px 15px; font-size: 13px; max-width: 80%; align-self: flex-start; color: #ef4444;">[ERROR] Lỗi kết nối trợ lý ảo!</div>`;
+        body.scrollTop = body.scrollHeight;
+    });
+};
+
 function updateRealtimeDate() {
     const el = document.getElementById('realtime-date');
     if (el) {
@@ -339,12 +404,14 @@ function updateRealtimeDate() {
     }
 }
 
+// 8. KHỞI TẠO HOÀN CHỈNH KHI TẢI TRANG
 document.addEventListener('DOMContentLoaded', () => {
     updateRealtimeDate();
-    document.getElementById('chatbot-fab')?.addEventListener('click', toggleChatbot);
-    document.getElementById('close-bot')?.addEventListener('click', toggleChatbot);
-    document.getElementById('send-chat')?.addEventListener('click', sendChatMessage);
+    document.getElementById('chatbot-fab')?.addEventListener('click', window.toggleChatbot);
+    document.getElementById('close-bot')?.addEventListener('click', window.toggleChatbot);
+    document.getElementById('send-chat')?.addEventListener('click', window.sendChatMessage);
     document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
+        if (e.key === 'Enter') window.sendChatMessage();
     });
+    console.log("[SYSTEM] Khởi chạy thành công bộ điều khiển FundSmart Pro Core!");
 });
